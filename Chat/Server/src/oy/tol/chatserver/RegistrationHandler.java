@@ -46,7 +46,7 @@ public class RegistrationHandler implements HttpHandler {
 					if (items.length == 2) {
 						if (!authenticator.addUser(items[0], items[1])) {
 							code = 403;
-							messageBody = "User already registered";
+							messageBody = "Registration failed";
 						} else {
 							// Success
 							exchange.sendResponseHeaders(code, -1);
@@ -68,7 +68,7 @@ public class RegistrationHandler implements HttpHandler {
 			messageBody = "Not supported.";
 		}
 		if (code < 200 || code > 299) {
-			byte [] bytes = messageBody.getBytes("UTF-8");
+			byte [] bytes = messageBody.getBytes(StandardCharsets.UTF_8);
 			exchange.sendResponseHeaders(code, bytes.length);
 			OutputStream os = exchange.getResponseBody();
 			os.write(bytes);

@@ -94,7 +94,7 @@ public class ChatClient {
 			username = newUsername;
 		}
 		System.out.print("Enter password > ");
-		char[] newPassword = console.readPassword();
+		char [] newPassword = console.readPassword();
 		if (newPassword.length > 0) {
 			password = new String(newPassword);
 		}

@@ -42,9 +42,9 @@ public class ChatDatabase {
 	}
 
 	public boolean addUser(String username, String password) {
-		// TODO. First check if username exists, then add.
+		// TODO: Save hashed password only!
 		boolean result = false;
-		if (null != connection) {
+		if (null != connection && !isRegisteredUser(username, password)) {
 			try {
 				String insertUserString = "insert into users " +
 						"VALUES('" + username + "','" + password + "')"; 
@@ -59,7 +59,29 @@ public class ChatDatabase {
 		return result;
 	}
 
-	public boolean isUserRegistered(String username, String password) {
+	public boolean isUserNameRegistered(String username) {
+		boolean result = false;
+		if (null != connection) {
+			try {
+				String queryUser = "select name from users where name='" + username + "'";
+				Statement queryStatement = connection.createStatement();
+				ResultSet rs = queryStatement.executeQuery(queryUser);
+				while (rs.next()) {
+					String user = rs.getString("name");
+					if (user.equals(username)) {
+						result = true;
+						break;
+					}
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+
+		}
+		return result;
+	}
+
+	public boolean isRegisteredUser(String username, String password) {
 		boolean result = false;
 		if (null != connection) {
 			try {
@@ -69,7 +91,7 @@ public class ChatDatabase {
 				while (rs.next()) {
 					String user = rs.getString("name");
 					String pw = rs.getString("passwd");
-					if (user.equals(username) && password.equals(pw)) {
+					if (user.equals(username) && pw.equals(password)) {
 						result = true;
 						break;
 					}

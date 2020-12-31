@@ -1,21 +1,13 @@
 package oy.tol.chatclient;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -28,7 +20,7 @@ import javax.net.ssl.TrustManagerFactory;
 class ChatHttpClient {
 	
 	private static final String CHAT = "chat";
-	private static final String REGISTER = "registration";
+	private static final String REGISTRATION = "registration";
 
 	private String host;
 
@@ -126,7 +118,7 @@ class ChatHttpClient {
 	}
 	
 	public int registerUser(String username, String password) throws Exception {
-		URL url = new URL(host + REGISTER);
+		URL url = new URL(host + REGISTRATION);
 
 		String auth = username + ":" + password;
 		
@@ -160,9 +152,6 @@ class ChatHttpClient {
 	// For accepting self signed certificates. Not to be used in production software!
 	
 	private HttpsURLConnection createTrustingConnectionDebug(URL url) throws Exception {
-		// File file = new File("server.cer");
-		//ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-		//InputStream is = classloader.getResourceAsStream("localhost.cer");
 		Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream("./localhost.cer"));
 
 		KeyStore keyStore = KeyStore.getInstance("JKS");
