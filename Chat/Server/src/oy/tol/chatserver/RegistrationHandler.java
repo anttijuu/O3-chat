@@ -26,6 +26,7 @@ public class RegistrationHandler implements HttpHandler {
 		String messageBody = "";
 		
 		if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
+			System.out.println("New user registration HTTP POST");
 			Headers headers = exchange.getRequestHeaders();
 			int contentLength = 0;
 			String contentType = "";
@@ -43,13 +44,14 @@ public class RegistrationHandler implements HttpHandler {
 				stream.close();
 				if (text.length() > 0) {
 					String [] items = text.split(":");
-					if (items.length == 2) {
-						if (!authenticator.addUser(items[0], items[1])) {
+					if (items.length == 3) {
+						if (!authenticator.addUser(items[0], items[1], items[2])) {
 							code = 403;
 							messageBody = "Registration failed";
 						} else {
 							// Success
 							exchange.sendResponseHeaders(code, -1);
+							System.out.println("User registered successfully: " + items[0]);
 						}
 					} else {
 						code = 400;
@@ -68,6 +70,7 @@ public class RegistrationHandler implements HttpHandler {
 			messageBody = "Not supported.";
 		}
 		if (code < 200 || code > 299) {
+			System.out.println("*** Error in user registration: " + code + " " + messageBody);
 			byte [] bytes = messageBody.getBytes(StandardCharsets.UTF_8);
 			exchange.sendResponseHeaders(code, bytes.length);
 			OutputStream os = exchange.getResponseBody();

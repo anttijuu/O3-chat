@@ -9,35 +9,37 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
+import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
+
+import org.json.JSONObject;
 
 class ChatHttpClient {
 	
 	private static final String CHAT = "chat";
 	private static final String REGISTRATION = "registration";
 
-	private String host;
-
 	private List<String> newMessages = null;
 	private String serverNotification = "";
 	
-	public String getHost() {
-		return host;
-	}
+	private ChatClientDataProvider dataProvider = null;
 	
-	public void setHost(String newHost) {
-		host = newHost;
-		if (!host.endsWith("/")) {
-			host += "/";
-		}
+	ChatHttpClient(ChatClientDataProvider provider) {
+		dataProvider = provider;
 	}
-	
+		
 	public String getServerNotification() {
 		return serverNotification;
 	}
@@ -46,15 +48,20 @@ class ChatHttpClient {
 		return newMessages;
 	}
 	
-	public int getChatMessages(String username, String password) throws Exception {
-		URL url = new URL(host + CHAT);
+	public int getChatMessages() throws Exception {
+		String addr = dataProvider.getServer();
+		if (!addr.endsWith("/")) {
+			addr += "/";
+		}
+		addr += CHAT;
+		URL url = new URL(addr);
 		
 		HttpsURLConnection connection = createTrustingConnectionDebug(url);
 		
 		connection.setRequestMethod("GET");
-		connection.setRequestProperty("Content-Type", "text/plain");
+		connection.setRequestProperty("Content-Type", "application/json");
 		
-		String auth = username + ":" + password;
+		String auth = dataProvider.getUsername() + ":" + dataProvider.getPassword();
 		byte [] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
 		String authHeaderValue = "Basic " + new String(encodedAuth);
 		connection.setRequestProperty("Authorization", authHeaderValue);
@@ -81,18 +88,32 @@ class ChatHttpClient {
 		return responseCode;
 	}
 	
-	public int postChatMessage(String username, String password, String message) throws Exception {
-		URL url = new URL(host + CHAT);
+	public int postChatMessage(String message) throws Exception {
+		String addr = dataProvider.getServer();
+		if (!addr.endsWith("/")) {
+			addr += "/";
+		}
+		addr += CHAT;
+		URL url = new URL(addr);
 		
-		String auth = username + ":" + password;
+		String auth = dataProvider.getUsername() + ":" + dataProvider.getPassword();
 		
 		HttpsURLConnection connection = createTrustingConnectionDebug(url);
 		
-		byte [] msgBytes = message.getBytes(StandardCharsets.UTF_8);
+		JSONObject msg = new JSONObject();
+		msg.put("user", dataProvider.getNick());
+		msg.put("message", message);
+		ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
+		String dateText = now.format(formatter);
+		msg.put("sent", dateText);
+		
+		byte [] msgBytes = msg.toString().getBytes(StandardCharsets.UTF_8); 
+		
 		connection.setRequestMethod("POST");
 		connection.setDoOutput(true);
 		connection.setDoInput(true);
-		connection.setRequestProperty("Content-Type", "text/plain");
+		connection.setRequestProperty("Content-Type", "application/json");
 		connection.setRequestProperty("Content-Length", String.valueOf(msgBytes.length));		
 		byte [] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
 		String authHeaderValue = "Basic " + new String(encodedAuth);
@@ -117,19 +138,24 @@ class ChatHttpClient {
 		return responseCode;		
 	}
 	
-	public int registerUser(String username, String password) throws Exception {
-		URL url = new URL(host + REGISTRATION);
+	public int registerUser() throws Exception {
+		String addr = dataProvider.getServer();
+		if (!addr.endsWith("/")) {
+			addr += "/";
+		}
+		addr += REGISTRATION;
+		URL url = new URL(addr);
 
-		String auth = username + ":" + password;
+		String auth = dataProvider.getUsername() + ":" + dataProvider.getPassword()+ ":" + dataProvider.getEmail();
 		
 		HttpsURLConnection connection = createTrustingConnectionDebug(url);
 		connection.setRequestMethod("POST");
 		connection.setDoOutput(true);
 		connection.setDoInput(true);
 		connection.setRequestProperty("Content-Type", "text/plain");
-		connection.setRequestProperty("Content-Length", String.valueOf(auth.getBytes().length));		
-		
 		byte [] encodedData = auth.getBytes(StandardCharsets.UTF_8); 
+		connection.setRequestProperty("Content-Length", String.valueOf(encodedData.length));		
+		
 		OutputStream writer = connection.getOutputStream();
 		writer.write(encodedData);
 		writer.close();

@@ -4,12 +4,13 @@ import java.io.Console;
 import java.io.IOException;
 import java.util.List;
 
-public class ChatClient {
+public class ChatClient implements ChatClientDataProvider {
 
 	private static final String SERVER = "https://localhost:8001/";
 	private static final String CMD_SERVER	 = "/server";
 	private static final String CMD_REGISTER = "/register";
 	private static final String CMD_LOGIN = "/login";
+	private static final String CMD_NICK = "/nick";
 	private static final String CMD_GET = "/get";
 	private static final String CMD_HELP = "/help";
 	private static final String CMD_EXIT = "/exit";
@@ -17,6 +18,8 @@ public class ChatClient {
 	private String currentServer = SERVER;
 	private String username = null;
 	private String password = null;
+	private String email = null;
+	private String nick = null;
 	
 	private ChatHttpClient httpClient = null;
 	
@@ -26,8 +29,7 @@ public class ChatClient {
 	}
 
 	public void run() {
-		httpClient = new ChatHttpClient();
-		httpClient.setHost(currentServer);
+		httpClient = new ChatHttpClient(this);
 		printCommands();
 		System.out.println("Using server " + currentServer);
 		Console console = System.console();
@@ -46,7 +48,10 @@ public class ChatClient {
 				registerUser(console);
 				break;
 			case CMD_LOGIN:
-				getUserCredentials(console);
+				getUserCredentials(console, false);
+				break;
+			case CMD_NICK:
+				getNick(console);
 				break;
 			case CMD_GET:
 				getNewMessages();
@@ -75,7 +80,6 @@ public class ChatClient {
 			String confirmation = console.readLine();
 			if (confirmation.length() == 0 || confirmation.equalsIgnoreCase("Y")) {
 				currentServer = newServer;
-				httpClient.setHost(currentServer);
 				username = null;
 				password = null;
 				System.out.println("Remember to register and/or login to the new server!");
@@ -87,24 +91,47 @@ public class ChatClient {
 	/**
 	 * Get user credentials from console .
 	 */
-	private void getUserCredentials(Console console) {
+	private void getUserCredentials(Console console, boolean forRegistering) {
 		System.out.print("Enter username > ");
 		String newUsername = console.readLine();
 		if (newUsername.length() > 0) {
 			username = newUsername;
+			if (null == nick) {
+				nick = username;
+			}
 		}
 		System.out.print("Enter password > ");
-		char [] newPassword = console.readPassword();
+		char [] newPassword = console.readPassword();
 		if (newPassword.length > 0) {
 			password = new String(newPassword);
 		}
+		if (forRegistering) {
+			System.out.print("Enter email > ");
+			String newEmail = console.readLine();
+			if (newEmail.length() > 0) {
+				email = newUsername;
+			}
+		}
 	}
+	
+	private void getNick(Console console) {
+		System.out.print("Enter nick > ");
+		String newNick = console.readLine();
+		if (newNick.length() > 0) {
+			nick = newNick;
+		}
+	}
+	
 	
 	private void registerUser(Console console) {
 		System.out.println("Give user credentials for new user for server " + currentServer);
-		getUserCredentials(console);
+		getUserCredentials(console, true);
 		try {
-			int response = httpClient.registerUser(username, password);
+			if (username == null || password == null || email == null) {
+				System.out.println("Must specify all user information for registration!");
+				return;
+			}
+			int response = httpClient.registerUser();
 			if (response >= 200 || response < 300) {
 				System.out.println("Registered successfully, you may start chatting!");
 			} else {
@@ -120,7 +147,7 @@ public class ChatClient {
 	private void getNewMessages() {
 		try {
 			if (null != username) {
-				int response = httpClient.getChatMessages(username, password);		
+				int response = httpClient.getChatMessages();		
 				if (response >= 200 || response < 300) {
 					List<String> messages = httpClient.getNewMessages();
 					if (null != messages) {
@@ -145,7 +172,7 @@ public class ChatClient {
 	private void postMessage(String message) {
 		if (null != username) {
 			try {
-				int response = httpClient.postChatMessage(username, password, message);
+				int response = httpClient.postChatMessage(message);
 				if (response < 200 || response >= 300) {
 					System.out.println("Error from server: " + response + " " + httpClient.getServerNotification());
 				}
@@ -163,10 +190,36 @@ public class ChatClient {
 		System.out.println("/server -- Change the server");
 		System.out.println("/register  -- Register as a new user in server");
 		System.out.println("/login -- Login using already registered credentials");
+		System.out.println("/nick -- Specify a nickname to use in chat server");
 		System.out.println("/get -- Get new messages from server");
 		System.out.println("/help -- Prints out this information");
 		System.out.println("/exit -- Exit the client app");
 		System.out.println("send a message to the chat server");
+	}
+
+	@Override
+	public String getServer() {
+		return currentServer;
+	}
+
+	@Override
+	public String getUsername() {
+		return username;
+	}
+
+	@Override
+	public String getPassword() {
+		return password;
+	}
+
+	@Override
+	public String getNick() {
+		return nick;
+	}
+
+	@Override
+	public String getEmail() {
+		return email;
 	}
 	
 	

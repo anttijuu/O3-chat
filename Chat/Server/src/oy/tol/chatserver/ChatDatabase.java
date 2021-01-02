@@ -38,22 +38,24 @@ public class ChatDatabase {
 	public void close() throws SQLException {
 		if (null != connection) {
 			connection.close();
+			connection = null;
 		}
 	}
 
-	public boolean addUser(String username, String password) {
+	public boolean addUser(String username, String password, String email) {
 		// TODO: Save hashed password only!
 		boolean result = false;
-		if (null != connection && !isRegisteredUser(username, password)) {
+		if (null != connection && !isUserNameRegistered(username)) {
 			try {
 				String insertUserString = "insert into users " +
-						"VALUES('" + username + "','" + password + "')"; 
+						"VALUES('" + username + "','" + password + "','" + email +"')"; 
 				Statement createStatement;
 				createStatement = connection.createStatement();
 				createStatement.executeUpdate(insertUserString);
 				result = true;
 			} catch (SQLException e) {
-				e.printStackTrace();
+				System.out.println("Could not register user in database: " + username);
+				System.out.println("Reason: " + e.getErrorCode() + " " + e.getMessage());
 			}
 		}
 		return result;
@@ -74,7 +76,8 @@ public class ChatDatabase {
 					}
 				}
 			} catch (SQLException e) {
-				e.printStackTrace();
+				System.out.println("Could not check isUserNameRegistered: " + username);
+				System.out.println("Reason: " + e.getErrorCode() + " " + e.getMessage());
 			}
 
 		}
@@ -97,7 +100,8 @@ public class ChatDatabase {
 					}
 				}
 			} catch (SQLException e) {
-				e.printStackTrace();
+				System.out.println("Could not check isRegisteredUser: " + username);
+				System.out.println("Reason: " + e.getErrorCode() + " " + e.getMessage());
 			}
 
 		}
@@ -109,6 +113,7 @@ public class ChatDatabase {
 			String createUsersString = "create table users " + 
 					"(name varchar(32) NOT NULL, " +
 					"passwd varchar(32) NOT NULL, " +
+					"email varchar(32) NOT NULL, " +
 					"PRIMARY KEY (name))";
 			Statement createStatement = connection.createStatement();
 			createStatement.executeUpdate(createUsersString);

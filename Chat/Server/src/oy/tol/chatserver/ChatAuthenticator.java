@@ -13,8 +13,8 @@ public class ChatAuthenticator extends BasicAuthenticator {
 		super("chat");
 	}
 	
-	public boolean addUser(String username, String password) {
-		return ChatDatabase.instance().addUser(username, password);
+	public boolean addUser(String username, String password, String email) {
+		return ChatDatabase.instance().addUser(username, password, email);
 	}
 
 	@Override

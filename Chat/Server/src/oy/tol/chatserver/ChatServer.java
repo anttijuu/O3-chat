@@ -27,8 +27,11 @@ public class ChatServer {
 	
 	public static void main(String[] args) throws Exception {
 		try {
+			System.out.println("Launching ChatServer");
+			System.out.println("Initializing database..");
 			ChatDatabase database = ChatDatabase.instance();
 			database.open("/Users/juustila/workspace/O3/Chat/Server/O3-chat.db");
+			System.out.println("Initializing HttpServer..");
 			HttpsServer server = HttpsServer.create(new InetSocketAddress(8001), 0);
 			SSLContext sslContext = chatServerSSLContext();
 			server.setHttpsConfigurator (new HttpsConfigurator(sslContext) {
@@ -46,11 +49,15 @@ public class ChatServer {
 		        // eg. if app has a UI and parameters supplied by a user.
 		        }
 		    });
+			System.out.println("Initializing authenticator...");
 			ChatAuthenticator authenticator = new ChatAuthenticator();
+			System.out.println("Creating ChatHandler.");
 			HttpContext chatContext = server.createContext("/chat", new ChatHandler());
 			chatContext.setAuthenticator(authenticator);
+			System.out.println("Creating RegistrationHandler.");
 			server.createContext("/registration", new RegistrationHandler(authenticator));
 			server.setExecutor(null);
+			System.out.println("Starting HttpServer.");
 			server.start();
 		} catch (SQLException e) {
 			e.printStackTrace();
