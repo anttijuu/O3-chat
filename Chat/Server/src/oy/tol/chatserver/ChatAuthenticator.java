@@ -7,7 +7,7 @@ import com.sun.net.httpserver.BasicAuthenticator;
 
 public class ChatAuthenticator extends BasicAuthenticator {
 
-	// TODO: It might be good for performance to cache users to the Map as did earlier.
+	// TODO: It might be good for performance to cache users to the memory resident Map as did earlier.
 	
 	ChatAuthenticator() {
 		super("chat");

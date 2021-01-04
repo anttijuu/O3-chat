@@ -13,6 +13,7 @@ public class ChatClient implements ChatClientDataProvider {
 	private static final String CMD_NICK = "/nick";
 	private static final String CMD_GET = "/get";
 	private static final String CMD_HELP = "/help";
+	private static final String CMD_INFO = "/info";
 	private static final String CMD_EXIT = "/exit";
 	
 	private String currentServer = SERVER;
@@ -58,6 +59,9 @@ public class ChatClient implements ChatClientDataProvider {
 				break;
 			case CMD_HELP:
 				printCommands();
+				break;
+			case CMD_INFO:
+				printInfo();
 				break;
 			case CMD_EXIT:
 				running = false;
@@ -149,9 +153,9 @@ public class ChatClient implements ChatClientDataProvider {
 			if (null != username) {
 				int response = httpClient.getChatMessages();		
 				if (response >= 200 || response < 300) {
-					List<String> messages = httpClient.getNewMessages();
+					List<ChatMessage> messages = httpClient.getNewMessages();
 					if (null != messages) {
-						for (String message : messages) {
+						for (ChatMessage message : messages) {
 							System.out.println(message);
 						}
 					} else {
@@ -193,10 +197,17 @@ public class ChatClient implements ChatClientDataProvider {
 		System.out.println("/nick -- Specify a nickname to use in chat server");
 		System.out.println("/get -- Get new messages from server");
 		System.out.println("/help -- Prints out this information");
+		System.out.println("/info -- Prints out settings and user information");
 		System.out.println("/exit -- Exit the client app");
-		System.out.println("send a message to the chat server");
+		System.out.println("Write a message and press enter to send a message to the chat server");
 	}
 
+	private void printInfo() {
+		System.out.println("Server: " + currentServer);
+		System.out.println("User: " + username);
+		System.out.println("Nick: " + nick);
+	}
+	
 	@Override
 	public String getServer() {
 		return currentServer;

@@ -34,6 +34,7 @@ public class ChatHandler implements HttpHandler {
 		public String nick;
 		public String message;
 	}
+	// TODO: change to arraylist and add sort like in client, to keep msgs in date order.
 	private Map<Long, ChatMessage> messages = new Hashtable<Long,ChatMessage>();
 	private long messageNum = 0;
 	
@@ -83,6 +84,7 @@ public class ChatHandler implements HttpHandler {
 			System.out.println(json);
 			stream.close();
 			if (json.length() > 0) {
+				// TODO process within try catch
 				if (processMessage(json)) {
 					exchange.sendResponseHeaders(code, -1);
 					System.out.println("New chatmessage handled, messages: " + messages.size());
@@ -115,6 +117,13 @@ public class ChatHandler implements HttpHandler {
 	
 	private int handleGetRequestFromClient(HttpExchange exchange) throws IOException {
 		int code = 200;
+		
+		if (messages.isEmpty()) {
+			code = 204;
+			exchange.sendResponseHeaders(code, 0);
+			return code;
+		}
+		
 		JSONArray responseMessages = new JSONArray();
 		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");

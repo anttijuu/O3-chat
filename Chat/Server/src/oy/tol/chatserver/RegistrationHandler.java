@@ -8,6 +8,9 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -36,26 +39,29 @@ public class RegistrationHandler implements HttpHandler {
 			if (headers.containsKey("Content-Type")) {
 				contentType = headers.get("Content-Type").get(0);
 			}
-			if (contentType.equalsIgnoreCase("text/plain")) {
+			if (contentType.equalsIgnoreCase("application/json")) {
 				InputStream stream = exchange.getRequestBody();
 				String text = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))
 					        .lines()
 					        .collect(Collectors.joining("\n"));
 				stream.close();
 				if (text.length() > 0) {
-					String [] items = text.split(":");
-					if (items.length == 3) {
-						if (!authenticator.addUser(items[0], items[1], items[2])) {
+					try {
+						JSONObject registrationMsg = new JSONObject(text);
+						String username = registrationMsg.getString("username");
+						String password = registrationMsg.getString("password");
+						String email = registrationMsg.getString("email");						
+						if (!authenticator.addUser(username, password, email)) {
 							code = 403;
 							messageBody = "Registration failed";
 						} else {
 							// Success
 							exchange.sendResponseHeaders(code, -1);
-							System.out.println("User registered successfully: " + items[0]);
+							System.out.println("User registered successfully: " + username);
 						}
-					} else {
+					} catch (JSONException e) {
 						code = 400;
-						messageBody = "No valid user:passwd combination in request body";
+						messageBody = "No valid registration data in request body";
 					}
 				} else {
 					code = 400;

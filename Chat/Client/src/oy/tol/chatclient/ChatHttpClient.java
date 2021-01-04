@@ -16,6 +16,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -24,6 +26,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 class ChatHttpClient {
@@ -31,7 +34,7 @@ class ChatHttpClient {
 	private static final String CHAT = "chat";
 	private static final String REGISTRATION = "registration";
 
-	private List<String> newMessages = null;
+	private List<ChatMessage> newMessages = null;
 	private String serverNotification = "";
 	
 	private ChatClientDataProvider dataProvider = null;
@@ -44,7 +47,7 @@ class ChatHttpClient {
 		return serverNotification;
 	}
 	
-	public List<String> getNewMessages() {
+	public List<ChatMessage> getNewMessages() {
 		return newMessages;
 	}
 	
@@ -67,14 +70,31 @@ class ChatHttpClient {
 		connection.setRequestProperty("Authorization", authHeaderValue);
 		
 		int responseCode = connection.getResponseCode();
-		if (responseCode >= 200 && responseCode < 300) {
-			newMessages = new ArrayList<String>();
+		if (responseCode == 204) {
+			newMessages = null;			
+		} else if (responseCode >= 200 && responseCode < 300) {
 			BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
-			String inputLine;
-			while ((inputLine = in.readLine()) != null) {
-				newMessages.add(inputLine);
+			String totalInput = "";
+			String input;
+			while ((input = in.readLine()) != null) {
+				totalInput += input;
 			}
 			in.close();
+			JSONArray jsonArray = new JSONArray(totalInput);
+			if (jsonArray.length() > 0) {
+				newMessages = new ArrayList<ChatMessage>();
+				for (int index = 0; index < jsonArray.length(); index++) {
+					JSONObject object = jsonArray.getJSONObject(index);
+					ChatMessage msg = ChatMessage.from(object);
+					newMessages.add(msg);
+				}
+				Collections.sort(newMessages, new Comparator<ChatMessage>() {
+				    @Override
+				    public int compare(ChatMessage lhs, ChatMessage rhs) {
+				        return lhs.sent.compareTo(rhs.sent);
+				    }
+				});
+			}
 			serverNotification = "";
 		} else {
 			newMessages = null;
@@ -146,14 +166,17 @@ class ChatHttpClient {
 		addr += REGISTRATION;
 		URL url = new URL(addr);
 
-		String auth = dataProvider.getUsername() + ":" + dataProvider.getPassword()+ ":" + dataProvider.getEmail();
+		JSONObject registrationMsg = new JSONObject();
+		registrationMsg.put("username", dataProvider.getUsername());
+		registrationMsg.put("password", dataProvider.getPassword());
+		registrationMsg.put("email", dataProvider.getEmail());
 		
 		HttpsURLConnection connection = createTrustingConnectionDebug(url);
 		connection.setRequestMethod("POST");
 		connection.setDoOutput(true);
 		connection.setDoInput(true);
-		connection.setRequestProperty("Content-Type", "text/plain");
-		byte [] encodedData = auth.getBytes(StandardCharsets.UTF_8); 
+		connection.setRequestProperty("Content-Type", "application/json");
+		byte [] encodedData = registrationMsg.toString().getBytes(StandardCharsets.UTF_8); 
 		connection.setRequestProperty("Content-Length", String.valueOf(encodedData.length));		
 		
 		OutputStream writer = connection.getOutputStream();
