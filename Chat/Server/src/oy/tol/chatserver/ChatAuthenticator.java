@@ -14,11 +14,11 @@ public class ChatAuthenticator extends BasicAuthenticator {
 	}
 	
 	public boolean addUser(String username, String password, String email) {
-		return ChatDatabase.instance().addUser(username, password, email);
+		return ChatDatabase.getInstance().addUser(username, password, email);
 	}
 
 	@Override
 	public boolean checkCredentials(String username, String password) {
-		return ChatDatabase.instance().isRegisteredUser(username, password);
+		return ChatDatabase.getInstance().isRegisteredUser(username, password);
 	}
 }

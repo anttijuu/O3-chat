@@ -29,7 +29,7 @@ public class ChatServer {
 		try {
 			System.out.println("Launching ChatServer");
 			System.out.println("Initializing database..");
-			ChatDatabase database = ChatDatabase.instance();
+			ChatDatabase database = ChatDatabase.getInstance();
 			database.open("/Users/juustila/workspace/O3/Chat/Server/O3-chat.db");
 			System.out.println("Initializing HttpServer..");
 			HttpsServer server = HttpsServer.create(new InetSocketAddress(8001), 0);

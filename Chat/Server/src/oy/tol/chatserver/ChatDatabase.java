@@ -12,7 +12,7 @@ public class ChatDatabase {
 	private Connection connection = null;
 	private static ChatDatabase singleton = null;
 
-	public static ChatDatabase instance() {
+	public synchronized static ChatDatabase getInstance() {
 		if (null == singleton) {
 			singleton = new ChatDatabase();
 		}
