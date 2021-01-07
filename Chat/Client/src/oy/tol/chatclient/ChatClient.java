@@ -6,6 +6,7 @@ import java.util.List;
 
 public class ChatClient implements ChatClientDataProvider {
 
+	// TODO Add "/test" command to send test registrations, chats, get them and also faulty requests.
 	private static final String SERVER = "https://localhost:8001/";
 	private static final String CMD_SERVER	 = "/server";
 	private static final String CMD_REGISTER = "/register";
