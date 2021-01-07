@@ -27,6 +27,8 @@ public class ChatServer {
 	
 	public static void main(String[] args) throws Exception {
 		try {
+			// TODO: all handlers' handle() execute with try/catch to make sure response is 
+			// delivered even when in error (use 500 server internal error if not something more specific.
 			System.out.println("Launching ChatServer");
 			System.out.println("Initializing database..");
 			ChatDatabase database = ChatDatabase.getInstance();

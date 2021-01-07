@@ -59,6 +59,7 @@ class ChatHttpClient {
 		addr += CHAT;
 		URL url = new URL(addr);
 		
+		// TODO: set timeout to 30 secs or something to indicate server not responding.
 		HttpsURLConnection connection = createTrustingConnectionDebug(url);
 		
 		connection.setRequestMethod("GET");
