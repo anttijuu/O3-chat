@@ -2,6 +2,7 @@ package oy.tol.chatclient;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
@@ -17,7 +18,7 @@ public class ChatMessage {
 		message.nick = jsonObject.getString("user");
 		String dateStr = jsonObject.getString("sent");
 		OffsetDateTime odt = OffsetDateTime.parse(dateStr);
-		message.sent = odt.toLocalDateTime();
+		message.sent = LocalDateTime.ofInstant(odt.toInstant(), ZoneId.systemDefault());
 		message.message = jsonObject.getString("message");
 		return message;
 	}
@@ -25,6 +26,7 @@ public class ChatMessage {
 	public String toString() {
 		String str = "";
 		LocalDateTime now = LocalDateTime.now();
+		System.out.println("Now: " + now);
 		long diff = Math.abs(ChronoUnit.HOURS.between(now, sent));
 		if (diff <= 24) {
 			str += sent.format(DateTimeFormatter.ISO_LOCAL_TIME);

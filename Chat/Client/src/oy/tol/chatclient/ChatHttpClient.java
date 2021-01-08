@@ -39,6 +39,9 @@ class ChatHttpClient {
 	
 	private ChatClientDataProvider dataProvider = null;
 	
+	private static final int CONNECT_TIMEOUT = 10 * 1000;
+	private static final int REQUEST_TIMEOUT = 30 * 1000;
+	
 	ChatHttpClient(ChatClientDataProvider provider) {
 		dataProvider = provider;
 	}
@@ -59,7 +62,7 @@ class ChatHttpClient {
 		addr += CHAT;
 		URL url = new URL(addr);
 		
-		// TODO: set timeout to 30 secs or something to indicate server not responding.
+		// TODO: set timeout to 30 seconds or something to indicate server not responding.
 		HttpsURLConnection connection = createTrustingConnectionDebug(url);
 		
 		connection.setRequestMethod("GET");
@@ -216,6 +219,9 @@ class ChatHttpClient {
 
 		HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
 		connection.setSSLSocketFactory(sslContext.getSocketFactory());
+		// All requests use these common timeouts.
+		connection.setConnectTimeout(CONNECT_TIMEOUT);
+		connection.setReadTimeout(REQUEST_TIMEOUT);
 		return connection;
 	}
 }
