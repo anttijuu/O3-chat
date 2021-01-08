@@ -41,7 +41,7 @@ public class ChatClient implements ChatClientDataProvider {
 		boolean running = true;
 		while (running) {
 			System.out.print("O3-chat > ");
-			String command = console.readLine();
+			String command = console.readLine().trim();
 			switch (command) {
 			case CMD_SERVER:
 				changeServer(console);
@@ -79,10 +79,10 @@ public class ChatClient implements ChatClientDataProvider {
 	
 	private void changeServer(Console console) {
 		System.out.print("Enter server address > ");
-		String newServer = console.readLine();
+		String newServer = console.readLine().trim();
 		if (newServer.length() > 0) {
 			System.out.print("Change server from " + currentServer + " to " + newServer + "Y/n? > ");
-			String confirmation = console.readLine();
+			String confirmation = console.readLine().trim();
 			if (confirmation.length() == 0 || confirmation.equalsIgnoreCase("Y")) {
 				currentServer = newServer;
 				username = null;
@@ -98,7 +98,7 @@ public class ChatClient implements ChatClientDataProvider {
 	 */
 	private void getUserCredentials(Console console, boolean forRegistering) {
 		System.out.print("Enter username > ");
-		String newUsername = console.readLine();
+		String newUsername = console.readLine().trim();
 		if (newUsername.length() > 0) {
 			username = newUsername;
 			if (null == nick) {
@@ -112,7 +112,7 @@ public class ChatClient implements ChatClientDataProvider {
 		}
 		if (forRegistering) {
 			System.out.print("Enter email > ");
-			String newEmail = console.readLine();
+			String newEmail = console.readLine().trim();
 			if (newEmail.length() > 0) {
 				email = newUsername;
 			}
@@ -121,7 +121,7 @@ public class ChatClient implements ChatClientDataProvider {
 	
 	private void getNick(Console console) {
 		System.out.print("Enter nick > ");
-		String newNick = console.readLine();
+		String newNick = console.readLine().trim();
 		if (newNick.length() > 0) {
 			nick = newNick;
 		}

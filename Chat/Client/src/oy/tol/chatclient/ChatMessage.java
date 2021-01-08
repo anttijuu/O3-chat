@@ -26,7 +26,6 @@ public class ChatMessage {
 	public String toString() {
 		String str = "";
 		LocalDateTime now = LocalDateTime.now();
-		System.out.println("Now: " + now);
 		long diff = Math.abs(ChronoUnit.HOURS.between(now, sent));
 		if (diff <= 24) {
 			str += sent.format(DateTimeFormatter.ISO_LOCAL_TIME);

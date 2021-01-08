@@ -11,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -29,11 +30,12 @@ public class ChatServer {
 		try {
 			// TODO: all handlers' handle() execute with try/catch to make sure response is 
 			// delivered even when in error (use 500 server internal error if not something more specific.
-			System.out.println("Launching ChatServer");
-			System.out.println("Initializing database..");
+			log("Launching ChatServer");
+			log("Launching ChatServer");
+			log("Initializing database..");
 			ChatDatabase database = ChatDatabase.getInstance();
 			database.open("/Users/juustila/workspace/O3/Chat/Server/O3-chat.db");
-			System.out.println("Initializing HttpServer..");
+			log("Initializing HttpServer..");
 			HttpsServer server = HttpsServer.create(new InetSocketAddress(8001), 0);
 			SSLContext sslContext = chatServerSSLContext();
 			server.setHttpsConfigurator (new HttpsConfigurator(sslContext) {
@@ -51,15 +53,15 @@ public class ChatServer {
 		        // eg. if app has a UI and parameters supplied by a user.
 		        }
 		    });
-			System.out.println("Initializing authenticator...");
+			log("Initializing authenticator...");
 			ChatAuthenticator authenticator = new ChatAuthenticator();
-			System.out.println("Creating ChatHandler.");
+			log("Creating ChatHandler.");
 			HttpContext chatContext = server.createContext("/chat", new ChatHandler());
 			chatContext.setAuthenticator(authenticator);
-			System.out.println("Creating RegistrationHandler.");
+			log("Creating RegistrationHandler.");
 			server.createContext("/registration", new RegistrationHandler(authenticator));
 			server.setExecutor(null);
-			System.out.println("Starting HttpServer.");
+			log("Starting HttpServer.");
 			server.start();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -82,5 +84,9 @@ public class ChatServer {
 		SSLContext ssl = SSLContext.getInstance("TLS");
 		ssl.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 		return ssl;
+	}
+	
+	public static void log(String message) {
+		System.out.println(LocalDateTime.now() + " " + message);
 	}
 }

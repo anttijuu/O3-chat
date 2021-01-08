@@ -29,7 +29,7 @@ public class RegistrationHandler implements HttpHandler {
 		String messageBody = "";
 		
 		if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
-			System.out.println("New user registration HTTP POST");
+			ChatServer.log("New user registration HTTP POST");
 			Headers headers = exchange.getRequestHeaders();
 			int contentLength = 0;
 			String contentType = "";
@@ -57,7 +57,7 @@ public class RegistrationHandler implements HttpHandler {
 						} else {
 							// Success
 							exchange.sendResponseHeaders(code, -1);
-							System.out.println("User registered successfully: " + username);
+							ChatServer.log("User registered successfully: " + username);
 						}
 					} catch (JSONException e) {
 						code = 400;
@@ -76,7 +76,7 @@ public class RegistrationHandler implements HttpHandler {
 			messageBody = "Not supported.";
 		}
 		if (code < 200 || code > 299) {
-			System.out.println("*** Error in user registration: " + code + " " + messageBody);
+			ChatServer.log("*** Error in user registration: " + code + " " + messageBody);
 			byte [] bytes = messageBody.getBytes(StandardCharsets.UTF_8);
 			exchange.sendResponseHeaders(code, bytes.length);
 			OutputStream os = exchange.getResponseBody();

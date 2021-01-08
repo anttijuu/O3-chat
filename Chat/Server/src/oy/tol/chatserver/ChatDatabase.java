@@ -54,8 +54,8 @@ public class ChatDatabase {
 				createStatement.executeUpdate(insertUserString);
 				result = true;
 			} catch (SQLException e) {
-				System.out.println("Could not register user in database: " + username);
-				System.out.println("Reason: " + e.getErrorCode() + " " + e.getMessage());
+				ChatServer.log("Could not register user in database: " + username);
+				ChatServer.log("Reason: " + e.getErrorCode() + " " + e.getMessage());
 			}
 		}
 		return result;
@@ -76,8 +76,8 @@ public class ChatDatabase {
 					}
 				}
 			} catch (SQLException e) {
-				System.out.println("Could not check isUserNameRegistered: " + username);
-				System.out.println("Reason: " + e.getErrorCode() + " " + e.getMessage());
+				ChatServer.log("Could not check isUserNameRegistered: " + username);
+				ChatServer.log("Reason: " + e.getErrorCode() + " " + e.getMessage());
 			}
 
 		}
@@ -100,8 +100,8 @@ public class ChatDatabase {
 					}
 				}
 			} catch (SQLException e) {
-				System.out.println("Could not check isRegisteredUser: " + username);
-				System.out.println("Reason: " + e.getErrorCode() + " " + e.getMessage());
+				ChatServer.log("Could not check isRegisteredUser: " + username);
+				ChatServer.log("Reason: " + e.getErrorCode() + " " + e.getMessage());
 			}
 
 		}

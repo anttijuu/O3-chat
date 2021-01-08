@@ -46,17 +46,17 @@ public class ChatHandler implements HttpHandler {
 		int code = 200;
 		
 		if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
-			System.out.println("New chatmessage in HTTP POST.");
+			ChatServer.log("New chatmessage in HTTP POST.");
 			code = handleChatMessageFromClient(exchange);
 		} else if (exchange.getRequestMethod().equalsIgnoreCase("GET")) {
-			System.out.println("HTTP GET for chats");
+			ChatServer.log("HTTP GET for chats");
 			code = handleGetRequestFromClient(exchange);
 		} else {
 			code = 400;
 			responseBody = "Not supported.";
 		}
 		if (code < 200 || code > 299) {
-			System.out.println("*** Error in /chat: " + code + " " + responseBody);
+			ChatServer.log("*** Error in /chat: " + code + " " + responseBody);
 			byte [] bytes = responseBody.getBytes("UTF-8");
 			exchange.sendResponseHeaders(code, bytes.length);
 			OutputStream os = exchange.getResponseBody();
@@ -81,24 +81,27 @@ public class ChatHandler implements HttpHandler {
 			String json = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))
 				        .lines()
 				        .collect(Collectors.joining("\n"));
-			System.out.println(json);
+			ChatServer.log(json);
 			stream.close();
 			if (json.length() > 0) {
 				// TODO process within try catch
 				if (processMessage(json)) {
 					exchange.sendResponseHeaders(code, -1);
-					System.out.println("New chatmessage handled, messages: " + messages.size());
+					ChatServer.log("New chatmessage handled, messages: " + messages.size());
 				} else {
 					code = 400;
 					responseBody = "Corrupted message.";
+					ChatServer.log(responseBody);
 				}
 			} else {
 				code = 400;
 				responseBody = "No content in request";
+				ChatServer.log(responseBody);
 			}
 		} else {
 			code = 411;
 			responseBody = "Content-Type must be application/json.";
+			ChatServer.log(responseBody);
 		}
 		return code;
 	}
@@ -120,7 +123,7 @@ public class ChatHandler implements HttpHandler {
 		
 		if (messages.isEmpty()) {
 			code = 204;
-			exchange.sendResponseHeaders(code, 0);
+			exchange.sendResponseHeaders(code, -1);
 			return code;
 		}
 		
