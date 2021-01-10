@@ -222,6 +222,7 @@ class ChatHttpClient {
 	// For accepting self signed certificates. Not to be used in production software!
 	
 	private HttpsURLConnection createTrustingConnectionDebug(URL url) throws Exception {
+		// TODO fix path away from certificate file name.
 		Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream("/Users/juustila/workspace/O3/Chat/Client/target/localhost.cer"));
 
 		KeyStore keyStore = KeyStore.getInstance("JKS");
