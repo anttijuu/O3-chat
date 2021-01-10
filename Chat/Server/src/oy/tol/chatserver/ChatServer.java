@@ -30,13 +30,13 @@ public class ChatServer {
 		try {
 			// TODO: all handlers' handle() execute with try/catch to make sure response is 
 			// delivered even when in error (use 500 server internal error if not something more specific.
-			log("Launching ChatServer");
-			log("Launching ChatServer");
-			log("Initializing database..");
+			log("Launching ChatServer...");
+			log("Initializing database...");
 			ChatDatabase database = ChatDatabase.getInstance();
 			database.open("/Users/juustila/workspace/O3/Chat/Server/O3-chat.db");
-			log("Initializing HttpServer..");
+			log("Initializing HttpServer...");
 			HttpsServer server = HttpsServer.create(new InetSocketAddress(8001), 0);
+			log("Initializing SSL Context...");
 			SSLContext sslContext = chatServerSSLContext();
 			server.setHttpsConfigurator (new HttpsConfigurator(sslContext) {
 		        public void configure (HttpsParameters params) {
@@ -55,13 +55,13 @@ public class ChatServer {
 		    });
 			log("Initializing authenticator...");
 			ChatAuthenticator authenticator = new ChatAuthenticator();
-			log("Creating ChatHandler.");
+			log("Creating ChatHandler...");
 			HttpContext chatContext = server.createContext("/chat", new ChatHandler());
 			chatContext.setAuthenticator(authenticator);
-			log("Creating RegistrationHandler.");
+			log("Creating RegistrationHandler...");
 			server.createContext("/registration", new RegistrationHandler(authenticator));
 			server.setExecutor(null);
-			log("Starting HttpServer.");
+			log("Starting ChatServer!");
 			server.start();
 		} catch (SQLException e) {
 			e.printStackTrace();

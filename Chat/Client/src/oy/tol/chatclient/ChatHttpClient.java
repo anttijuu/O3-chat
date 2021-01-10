@@ -10,6 +10,8 @@ import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -20,6 +22,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -42,6 +45,10 @@ class ChatHttpClient {
 	private static final int CONNECT_TIMEOUT = 10 * 1000;
 	private static final int REQUEST_TIMEOUT = 30 * 1000;
 	
+	private static final DateTimeFormatter httpDateFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
+
+	private OffsetDateTime lastGetDateTime = null;
+	
 	ChatHttpClient(ChatClientDataProvider provider) {
 		dataProvider = provider;
 	}
@@ -62,11 +69,16 @@ class ChatHttpClient {
 		addr += CHAT;
 		URL url = new URL(addr);
 		
+		
 		// TODO: set timeout to 30 seconds or something to indicate server not responding.
 		HttpsURLConnection connection = createTrustingConnectionDebug(url);
 		
 		connection.setRequestMethod("GET");
 		connection.setRequestProperty("Content-Type", "application/json");
+		if (null != lastGetDateTime) {
+			String getModifiedSinceString = lastGetDateTime.format(httpDateFormatter);
+			connection.setRequestProperty("If-Modified-Since", getModifiedSinceString);
+		}
 		
 		String auth = dataProvider.getUsername() + ":" + dataProvider.getPassword();
 		byte [] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
@@ -77,6 +89,11 @@ class ChatHttpClient {
 		if (responseCode == 204) {
 			newMessages = null;			
 		} else if (responseCode >= 200 && responseCode < 300) {
+			String lastModifiedString = connection.getHeaderField("Last-Modified");
+			if (null != lastModifiedString) {
+				OffsetDateTime odt = OffsetDateTime.parse(lastModifiedString, httpDateFormatter);
+				lastGetDateTime = OffsetDateTime.ofInstant(odt.toInstant(), ZoneId.systemDefault());
+			}
 			BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
 			String totalInput = "";
 			String input;

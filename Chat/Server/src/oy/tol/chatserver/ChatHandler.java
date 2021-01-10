@@ -16,6 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
@@ -41,15 +42,16 @@ public class ChatHandler implements HttpHandler {
 	// private ArrayList<String> messages = new ArrayList<String>();
 	private String responseBody = "";
 	
+	private static final DateTimeFormatter jsonDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
+	private static final DateTimeFormatter httpDateFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
+	
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
 		int code = 200;
 		
 		if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
-			ChatServer.log("New chatmessage in HTTP POST.");
 			code = handleChatMessageFromClient(exchange);
 		} else if (exchange.getRequestMethod().equalsIgnoreCase("GET")) {
-			ChatServer.log("HTTP GET for chats");
 			code = handleGetRequestFromClient(exchange);
 		} else {
 			code = 400;
@@ -122,30 +124,65 @@ public class ChatHandler implements HttpHandler {
 		int code = 200;
 		
 		if (messages.isEmpty()) {
+			ChatServer.log("No messages to deliver to client");
 			code = 204;
 			exchange.sendResponseHeaders(code, -1);
 			return code;
 		}
 		
+		Headers requestHeaders = exchange.getRequestHeaders();
+		LocalDateTime messagesSince = null;
+		if (requestHeaders.containsKey("If-Modified-Since")) {
+			String requestSinceString = requestHeaders.getFirst("If-Modified-Since");
+			OffsetDateTime odt = OffsetDateTime.parse(requestSinceString, httpDateFormatter);
+			messagesSince = LocalDateTime.ofInstant(odt.toInstant(), ZoneId.systemDefault());
+		} else {
+			ChatServer.log("No If-Modified-Since header in request");
+		}
+		
 		JSONArray responseMessages = new JSONArray();
 		
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
-		
+		ZonedDateTime newest = null;
 		for (Map.Entry<Long,ChatMessage> message : messages.entrySet()) {
-			JSONObject jsonMessage = new JSONObject();
-			jsonMessage.put("message", message.getValue().message);
-			jsonMessage.put("user", message.getValue().nick);
-			LocalDateTime date = message.getValue().sent;
-			ZonedDateTime toSend = ZonedDateTime.of(date, ZoneId.of("UTC"));
-			String dateText = toSend.format(formatter);
-			jsonMessage.put("sent", dateText);
-			responseMessages.put(jsonMessage);
+			boolean includeThis = false;
+			if (null == messagesSince || (messagesSince != null && messagesSince.isBefore(message.getValue().sent))) {
+				includeThis = true;
+			}
+			if (includeThis) {
+				JSONObject jsonMessage = new JSONObject();
+				jsonMessage.put("message", message.getValue().message);
+				jsonMessage.put("user", message.getValue().nick);
+				LocalDateTime date = message.getValue().sent;
+				ZonedDateTime toSend = ZonedDateTime.of(date, ZoneId.of("UTC"));
+				if (null == newest) {
+					newest = toSend;
+				} else {
+					if (toSend.isAfter(newest)) {
+						newest = toSend;
+					}
+				}
+				String dateText = toSend.format(jsonDateFormatter);
+				jsonMessage.put("sent", dateText);
+				responseMessages.put(jsonMessage);
+			}
 		}
-		byte [] bytes = responseMessages.toString().getBytes("UTF-8");
-		exchange.sendResponseHeaders(code, bytes.length);
-		OutputStream os = exchange.getResponseBody();
-		os.write(bytes);
-		os.close();
+		if (responseMessages.isEmpty()) {
+			ChatServer.log("No new messages to deliver to client since last request");
+			code = 204;
+			exchange.sendResponseHeaders(code, -1);
+		} else {
+			ChatServer.log("Delivering " + responseMessages.length() + " messages to client");
+			byte [] bytes = responseMessages.toString().getBytes("UTF-8");
+			exchange.sendResponseHeaders(code, bytes.length);
+			if (null != newest) {
+				Headers headers = exchange.getResponseHeaders();
+				String lastModifiedString = newest.format(httpDateFormatter);
+				headers.add("Last-Modified", lastModifiedString);
+			}
+			OutputStream os = exchange.getResponseBody();
+			os.write(bytes);
+			os.close();
+		}
 		return code;
 	}
 	
