@@ -32,12 +32,12 @@ public class ChatServer {
 			// delivered even when in error (use 500 server internal error if not something more specific.
 			log("Launching ChatServer...");
 			log("Initializing database...");
-			if (args.length != 2) {
-				log("Usage java -jar " + args[0] + " dbname.db");
+			if (args.length != 1) {
+				log("Usage java -jar jar-file.jar dbname.db");
 				return;
 			}
 			ChatDatabase database = ChatDatabase.getInstance();
-			database.open(args[1]);
+			database.open(args[0]);
 			log("Initializing HttpServer...");
 			HttpsServer server = HttpsServer.create(new InetSocketAddress(8001), 0);
 			log("Initializing SSL Context...");

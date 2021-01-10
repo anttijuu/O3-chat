@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -134,8 +133,9 @@ public class ChatHandler implements HttpHandler {
 		LocalDateTime messagesSince = null;
 		if (requestHeaders.containsKey("If-Modified-Since")) {
 			String requestSinceString = requestHeaders.getFirst("If-Modified-Since");
-			OffsetDateTime odt = OffsetDateTime.parse(requestSinceString, httpDateFormatter);
-			messagesSince = LocalDateTime.ofInstant(odt.toInstant(), ZoneId.systemDefault());
+			ChatServer.log("Client wants messages from " + requestSinceString);
+			ZonedDateTime odt = ZonedDateTime.parse(requestSinceString, httpDateFormatter);
+			messagesSince = odt.toLocalDateTime();
 		} else {
 			ChatServer.log("No If-Modified-Since header in request");
 		}
@@ -145,6 +145,8 @@ public class ChatHandler implements HttpHandler {
 		ZonedDateTime newest = null;
 		for (Map.Entry<Long,ChatMessage> message : messages.entrySet()) {
 			boolean includeThis = false;
+			ChatServer.log("Wants since: " + messagesSince);
+			ChatServer.log("Msg sent: " + message.getValue().sent);
 			if (null == messagesSince || (messagesSince != null && messagesSince.isBefore(message.getValue().sent))) {
 				includeThis = true;
 			}
@@ -172,13 +174,16 @@ public class ChatHandler implements HttpHandler {
 			exchange.sendResponseHeaders(code, -1);
 		} else {
 			ChatServer.log("Delivering " + responseMessages.length() + " messages to client");
-			byte [] bytes = responseMessages.toString().getBytes("UTF-8");
-			exchange.sendResponseHeaders(code, bytes.length);
 			if (null != newest) {
 				Headers headers = exchange.getResponseHeaders();
 				String lastModifiedString = newest.format(httpDateFormatter);
 				headers.add("Last-Modified", lastModifiedString);
+				ChatServer.log("Added Last-Modified header to response");
+			} else {
+				ChatServer.log("Did not put Last-Modified header in response");
 			}
+			byte [] bytes = responseMessages.toString().getBytes("UTF-8");
+			exchange.sendResponseHeaders(code, bytes.length);
 			OutputStream os = exchange.getResponseBody();
 			os.write(bytes);
 			os.close();

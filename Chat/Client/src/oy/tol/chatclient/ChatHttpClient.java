@@ -91,7 +91,7 @@ class ChatHttpClient {
 		} else if (responseCode >= 200 && responseCode < 300) {
 			String lastModifiedString = connection.getHeaderField("Last-Modified");
 			if (null != lastModifiedString) {
-				OffsetDateTime odt = OffsetDateTime.parse(lastModifiedString, httpDateFormatter);
+				ZonedDateTime odt = ZonedDateTime.parse(lastModifiedString, httpDateFormatter);
 				lastGetDateTime = OffsetDateTime.ofInstant(odt.toInstant(), ZoneId.systemDefault());
 			}
 			BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
@@ -222,7 +222,7 @@ class ChatHttpClient {
 	// For accepting self signed certificates. Not to be used in production software!
 	
 	private HttpsURLConnection createTrustingConnectionDebug(URL url) throws Exception {
-		Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream("/Users/anttijuustila/workspace/O3-chat/Chat/Client/target/localhost.cer"));
+		Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream("/Users/juustila/workspace/O3/Chat/Client/target/localhost.cer"));
 
 		KeyStore keyStore = KeyStore.getInstance("JKS");
 		keyStore.load(null, null);
