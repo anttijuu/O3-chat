@@ -1,8 +1,5 @@
 package oy.tol.chatserver;
 
-import java.util.Hashtable;
-import java.util.Map;
-
 import com.sun.net.httpserver.BasicAuthenticator;
 
 public class ChatAuthenticator extends BasicAuthenticator {

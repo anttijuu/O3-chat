@@ -10,9 +10,20 @@ import org.json.JSONObject;
 
 public class ChatMessage {
 	public LocalDateTime sent;
-	private String nick;
-	private String message;
-	
+	public String nick;
+	public String message;
+	public boolean useColors = true;
+
+	public static final String ANSI_RESET = "\u001B[0m";
+	public static final String ANSI_BLACK = "\u001B[30m";
+	public static final String ANSI_RED = "\u001B[31m";
+	public static final String ANSI_GREEN = "\u001B[32m";
+	public static final String ANSI_YELLOW = "\u001B[33m";
+	public static final String ANSI_BLUE = "\u001B[34m";
+	public static final String ANSI_PURPLE = "\u001B[35m";
+	public static final String ANSI_CYAN = "\u001B[36m";
+	public static final String ANSI_WHITE = "\u001B[37m";
+
 	static public ChatMessage from(JSONObject jsonObject) {
 		ChatMessage message = new ChatMessage();
 		message.nick = jsonObject.getString("user");
@@ -27,12 +38,22 @@ public class ChatMessage {
 		String str = "";
 		LocalDateTime now = LocalDateTime.now();
 		long diff = Math.abs(ChronoUnit.HOURS.between(now, sent));
+		if (useColors) {
+			str += ANSI_GREEN;
+		}
 		if (diff <= 24) {
 			str += sent.format(DateTimeFormatter.ISO_LOCAL_TIME);
 		} else {
 			str += sent.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
 		}
-		str += " " + nick + ": " + message;
+		if (useColors) {
+			str += ANSI_RED;
+		}
+		str += " " + nick + ": ";
+		if (useColors) {
+			str += ANSI_CYAN;
+		} 
+		str += message + ANSI_RESET;
 		return str;
 	}
 	

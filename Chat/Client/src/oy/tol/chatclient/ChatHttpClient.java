@@ -222,7 +222,7 @@ class ChatHttpClient {
 	// For accepting self signed certificates. Not to be used in production software!
 	
 	private HttpsURLConnection createTrustingConnectionDebug(URL url) throws Exception {
-		Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream("./localhost.cer"));
+		Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream("/Users/anttijuustila/workspace/O3-chat/Chat/Client/target/localhost.cer"));
 
 		KeyStore keyStore = KeyStore.getInstance("JKS");
 		keyStore.load(null, null);

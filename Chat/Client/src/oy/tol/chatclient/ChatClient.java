@@ -148,7 +148,7 @@ public class ChatClient implements ChatClientDataProvider {
 			System.out.println(e.getLocalizedMessage());
 		}
 	}
-	
+
 	private void getNewMessages() {
 		try {
 			if (null != username) {

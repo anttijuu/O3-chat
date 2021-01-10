@@ -33,8 +33,13 @@ public class ChatServer {
 			log("Launching ChatServer...");
 			log("Initializing database...");
 			ChatDatabase database = ChatDatabase.getInstance();
+<<<<<<< HEAD
 			database.open("/Users/juustila/workspace/O3/Chat/Server/O3-chat.db");
 			log("Initializing HttpServer...");
+=======
+			database.open("/Users/anttijuustila/workspace/O3-chat/Chat/Server/O3-chat.db");
+			log("Initializing HttpServer..");
+>>>>>>> 1edafce90b384ebd2aacceec79f3ec3a04f84833
 			HttpsServer server = HttpsServer.create(new InetSocketAddress(8001), 0);
 			log("Initializing SSL Context...");
 			SSLContext sslContext = chatServerSSLContext();
@@ -86,7 +91,17 @@ public class ChatServer {
 		return ssl;
 	}
 	
+	public static final String ANSI_RESET = "\u001B[0m";
+	public static final String ANSI_BLACK = "\u001B[30m";
+	public static final String ANSI_RED = "\u001B[31m";
+	public static final String ANSI_GREEN = "\u001B[32m";
+	public static final String ANSI_YELLOW = "\u001B[33m";
+	public static final String ANSI_BLUE = "\u001B[34m";
+	public static final String ANSI_PURPLE = "\u001B[35m";
+	public static final String ANSI_CYAN = "\u001B[36m";
+	public static final String ANSI_WHITE = "\u001B[37m";
+
 	public static void log(String message) {
-		System.out.println(LocalDateTime.now() + " " + message);
+		System.out.println(ANSI_GREEN + LocalDateTime.now() + ANSI_RESET + " " + message);
 	}
 }
