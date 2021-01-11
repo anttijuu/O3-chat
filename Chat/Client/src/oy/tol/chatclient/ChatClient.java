@@ -68,7 +68,7 @@ public class ChatClient implements ChatClientDataProvider {
 				running = false;
 				break;
 			default:
-				if (command.length() > 0) {
+				if (command.length() > 0 && !command.startsWith("/")) {
 					postMessage(command);
 				}
 				break;
