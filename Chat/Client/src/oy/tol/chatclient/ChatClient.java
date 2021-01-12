@@ -116,6 +116,8 @@ public class ChatClient implements ChatClientDataProvider {
 			if (newEmail.length() > 0) {
 				email = newUsername;
 			}
+		} else {
+			getNewMessages();
 		}
 	}
 	

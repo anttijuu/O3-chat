@@ -49,9 +49,6 @@ public class ChatServer {
 		        SSLContext c = getSSLContext();
 		        // get the default parameters
 		        SSLParameters sslparams = c.getDefaultSSLParameters();
-//		        if (remote.equals (...) ) {
-//		            // modify the default set for client x
-//		        }
 		        params.setSSLParameters(sslparams);
 		        // statement above could throw IAE if any params invalid.
 		        // eg. if app has a UI and parameters supplied by a user.
