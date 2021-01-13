@@ -3,8 +3,6 @@ package oy.tol.chatserver;
 import com.sun.net.httpserver.BasicAuthenticator;
 
 public class ChatAuthenticator extends BasicAuthenticator {
-
-	// TODO: It might be good for performance to cache users to the memory resident Map as did earlier.
 	
 	ChatAuthenticator() {
 		super("chat");
@@ -18,4 +16,6 @@ public class ChatAuthenticator extends BasicAuthenticator {
 	public boolean checkCredentials(String username, String password) {
 		return ChatDatabase.getInstance().isRegisteredUser(username, password);
 	}
+
+
 }

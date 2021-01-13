@@ -101,9 +101,7 @@ public class ChatClient implements ChatClientDataProvider {
 		String newUsername = console.readLine().trim();
 		if (newUsername.length() > 0) {
 			username = newUsername;
-			if (null == nick) {
-				nick = username;
-			}
+			nick = username;
 		}
 		System.out.print("Enter password > ");
 		char [] newPassword = console.readPassword();

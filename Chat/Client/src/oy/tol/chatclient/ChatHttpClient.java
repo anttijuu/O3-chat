@@ -223,7 +223,7 @@ class ChatHttpClient {
 	
 	private HttpsURLConnection createTrustingConnectionDebug(URL url) throws Exception {
 		// TODO fix path away from certificate file name.
-		Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream("/Users/juustila/workspace/O3/Chat/Client/target/localhost.cer"));
+		Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream("./localhost.cer"));
 
 		KeyStore keyStore = KeyStore.getInstance("JKS");
 		keyStore.load(null, null);
