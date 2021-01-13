@@ -1,0 +1,36 @@
+@startuml
+actor User
+boundary ChatClient
+boundary ChatServer
+alt not yet registered
+   User -> ChatClient : register
+   ChatClient -> User : ask user info
+   User -> ChatClient : done
+   ChatClient -> ChatServer : POST /register
+   ChatServer -> ChatClient : 200 OK
+end
+User -> ChatClient : login
+ChatClient -> User : ask login info
+User -> ChatClient : done
+ChatClient -> ChatServer : GET /chat
+note right: Login credentials passed in Authorization header 
+ChatServer -> ChatClient : 200 OK, with response body JSON
+ChatClient -> ChatClient : parse JSON
+note right: Last-Modified header datetime saved in client.
+ChatClient -> User : here are the messages
+User -> ChatClient : enters a message
+ChatClient -> ChatServer : POST /chat
+ChatServer -> ChatClient : 200 OK
+ChatClient -> ChatServer : GET /chat
+note right
+  If-Modified-Since tells the server from which
+  datetime to deliver chats from.
+end note
+ChatServer -> ChatClient : 200 OK, with response body JSON
+ChatClient -> ChatClient : parse JSON
+note right: Last-Modified header datetime saved in client.
+ChatClient -> User : here are the messages
+note over ChatClient, ChatServer
+...and the chatting continues...
+end note
+@enduml
