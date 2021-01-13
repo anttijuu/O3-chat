@@ -106,9 +106,9 @@ public class ChatDatabase {
 				ResultSet rs = queryStatement.executeQuery(queryUser);
 				while (rs.next()) {
 					String user = rs.getString("name");
-					String pw = rs.getString("passwd");
+					String hashedPassword = rs.getString("passwd");
 					if (user.equals(username)) { // should match since the SQL query...
-					 	if (pw.equals(Crypt.crypt(password, pw))) {
+					 	if (hashedPassword.equals(Crypt.crypt(password, hashedPassword))) {
 							result = true;
 							break;
 						}
