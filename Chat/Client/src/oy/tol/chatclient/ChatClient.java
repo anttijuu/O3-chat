@@ -112,7 +112,7 @@ public class ChatClient implements ChatClientDataProvider {
 			System.out.print("Enter email > ");
 			String newEmail = console.readLine().trim();
 			if (newEmail.length() > 0) {
-				email = newUsername;
+				email = newEmail;
 			}
 		} else {
 			getNewMessages();

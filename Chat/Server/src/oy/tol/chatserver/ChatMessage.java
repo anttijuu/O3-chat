@@ -1,7 +1,7 @@
 package oy.tol.chatserver;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 
 public class ChatMessage {
@@ -10,6 +10,10 @@ public class ChatMessage {
     public String message;
 
     long dateAsInt() {
-        return sent.toEpochSecond(ZoneOffset.UTC);
+        return sent.toInstant(ZoneOffset.UTC).toEpochMilli();
+    }
+
+    void setSent(long epoch) {
+        sent = LocalDateTime.ofInstant(Instant.ofEpochMilli(epoch), ZoneOffset.UTC);
     }
 }

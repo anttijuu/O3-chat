@@ -9,21 +9,16 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.ZonedDateTime;	
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.TimeZone;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -45,8 +40,9 @@ class ChatHttpClient {
 	private static final int CONNECT_TIMEOUT = 10 * 1000;
 	private static final int REQUEST_TIMEOUT = 30 * 1000;
 	
-	private static final DateTimeFormatter httpDateFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
-
+	private static final DateTimeFormatter httpDateFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss.SSS z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
+	private static final DateTimeFormatter jsonDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+	
 	private OffsetDateTime lastGetDateTime = null;
 	
 	ChatHttpClient(ChatClientDataProvider provider) {
@@ -145,8 +141,7 @@ class ChatHttpClient {
 		msg.put("user", dataProvider.getNick());
 		msg.put("message", message);
 		ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
-		String dateText = now.format(formatter);
+		String dateText = now.format(jsonDateFormatter);
 		msg.put("sent", dateText);
 		
 		byte [] msgBytes = msg.toString().getBytes(StandardCharsets.UTF_8); 

@@ -129,11 +129,12 @@ public class ChatDatabase {
 		return result;
 	}
 
-	public boolean insertMessage(String user, String nick, long dateTime, String message) {
+	public boolean insertMessage(String user, ChatMessage message) {
 		boolean result = false;
 		try {
+			long timeStamp = message.dateAsInt();
 			String insertMsgStatement = "insert into messages " +
-						"VALUES('" + user + "','" + nick + "','" + dateTime +"','" + message + "')"; 
+						"VALUES('" + user + "','" + message.nick + "','" + timeStamp +"','" + message.message + "')"; 
 			Statement createStatement;
 			createStatement = connection.createStatement();
 			createStatement.executeUpdate(insertMsgStatement);
@@ -148,7 +149,33 @@ public class ChatDatabase {
 
 	List<ChatMessage> getMessages(long since) {
 		ArrayList<ChatMessage> messages = null;
+		Statement queryStatement = null;
 
+		try {
+			String queryMessages = "select nick, sent, message from messages ";
+			if (since > 0) {
+				queryMessages += "where sent > " + since + " ";
+			}
+			queryMessages += " order by sent asc limit 100";
+			ChatServer.log(queryMessages);
+			queryStatement = connection.createStatement();
+			ResultSet rs = queryStatement.executeQuery(queryMessages);
+			messages = new ArrayList<ChatMessage>();
+			while (rs.next()) {
+				String user = rs.getString("nick");
+				String message = rs.getString("message");
+				long sent = rs.getLong("sent");
+				ChatMessage msg = new ChatMessage();
+				msg.nick = user;
+				msg.message = message;
+				msg.setSent(sent);
+				messages.add(msg);
+			}
+			queryStatement.close();
+		} catch (SQLException e) {
+			ChatServer.log("Could not get chat message from database");
+			ChatServer.log("Reason: " + e.getErrorCode() + " " + e.getMessage());
+		}
 		return messages;
 	}
 
@@ -166,9 +193,10 @@ public class ChatDatabase {
 			createStatement = connection.createStatement();
 			String createChatsString = "create table messages " +
 					"(user varchar(32) NOT NULL, " +
-					"nick varchar(32) NOT NULL" +
-					"sent integer NOT NULL, " +
-					"message varchar(1000) NOT NULL";
+					"nick varchar(32) NOT NULL, " +
+					"sent numeric NOT NULL, " +
+					"message varchar(1000) NOT NULL," +
+					"PRIMARY KEY(user,sent))";
 			createStatement.executeUpdate(createChatsString);
 			createStatement.close();
 			return true;
