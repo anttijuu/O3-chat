@@ -29,11 +29,6 @@ import com.sun.net.httpserver.HttpHandler;
 
 public class ChatHandler implements HttpHandler {
 
-	private class ChatMessage {
-		public LocalDateTime sent;
-		public String nick;
-		public String message;
-	}
 	// TODO: change to arraylist and add sort like in client, to keep msgs in date order.
 	private Map<Long, ChatMessage> messages = new Hashtable<Long,ChatMessage>();
 	private long messageNum = 0;

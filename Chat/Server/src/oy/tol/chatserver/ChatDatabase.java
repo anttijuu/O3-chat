@@ -7,7 +7,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 import org.apache.commons.codec.digest.Crypt;
 
@@ -17,7 +19,7 @@ public class ChatDatabase {
 	private static ChatDatabase singleton = null;
 	private SecureRandom secureRandom = null;
 
-	public synchronized static ChatDatabase getInstance() {
+	public static synchronized ChatDatabase getInstance() {
 		if (null == singleton) {
 			singleton = new ChatDatabase();
 		}
@@ -65,6 +67,7 @@ public class ChatDatabase {
 				Statement createStatement;
 				createStatement = connection.createStatement();
 				createStatement.executeUpdate(insertUserString);
+				createStatement.close();
 				result = true;
 			} catch (SQLException e) {
 				ChatServer.log("Could not register user in database: " + username);
@@ -88,6 +91,7 @@ public class ChatDatabase {
 						break;
 					}
 				}
+				queryStatement.close();
 			} catch (SQLException e) {
 				ChatServer.log("Could not check isUserNameRegistered: " + username);
 				ChatServer.log("Reason: " + e.getErrorCode() + " " + e.getMessage());
@@ -99,10 +103,11 @@ public class ChatDatabase {
 
 	public boolean isRegisteredUser(String username, String password) {
 		boolean result = false;
+		Statement queryStatement = null;
 		if (null != connection) {
 			try {
 				String queryUser = "select name, passwd, salt from users where name='" + username + "'";
-				Statement queryStatement = connection.createStatement();
+				queryStatement = connection.createStatement();
 				ResultSet rs = queryStatement.executeQuery(queryUser);
 				while (rs.next()) {
 					String user = rs.getString("name");
@@ -114,6 +119,7 @@ public class ChatDatabase {
 						}
 					}
 				}
+				queryStatement.close();
 			} catch (SQLException e) {
 				ChatServer.log("Could not check isRegisteredUser: " + username);
 				ChatServer.log("Reason: " + e.getErrorCode() + " " + e.getMessage());
@@ -121,6 +127,29 @@ public class ChatDatabase {
 
 		}
 		return result;
+	}
+
+	public boolean insertMessage(String user, String nick, long dateTime, String message) {
+		boolean result = false;
+		try {
+			String insertMsgStatement = "insert into messages " +
+						"VALUES('" + user + "','" + nick + "','" + dateTime +"','" + message + "')"; 
+			Statement createStatement;
+			createStatement = connection.createStatement();
+			createStatement.executeUpdate(insertMsgStatement);
+			createStatement.close();
+			result = true;
+		} catch (SQLException e) {
+			ChatServer.log("Could not insert new chat message from: " + user);
+			ChatServer.log("Reason: " + e.getErrorCode() + " " + e.getMessage());
+		}
+		return result;
+	}
+
+	List<ChatMessage> getMessages(long since) {
+		ArrayList<ChatMessage> messages = null;
+
+		return messages;
 	}
 
 	private boolean initializeDatabase() throws SQLException {
@@ -133,6 +162,15 @@ public class ChatDatabase {
 					"PRIMARY KEY (name))";
 			Statement createStatement = connection.createStatement();
 			createStatement.executeUpdate(createUsersString);
+			createStatement.close();
+			createStatement = connection.createStatement();
+			String createChatsString = "create table messages " +
+					"(user varchar(32) NOT NULL, " +
+					"nick varchar(32) NOT NULL" +
+					"sent integer NOT NULL, " +
+					"message varchar(1000) NOT NULL";
+			createStatement.executeUpdate(createChatsString);
+			createStatement.close();
 			return true;
 		}
 		return false;
