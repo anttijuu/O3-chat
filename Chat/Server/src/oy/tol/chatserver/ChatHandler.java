@@ -31,14 +31,18 @@ public class ChatHandler implements HttpHandler {
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
 		int code = 200;
-		
-		if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
-			code = handleChatMessageFromClient(exchange);
-		} else if (exchange.getRequestMethod().equalsIgnoreCase("GET")) {
-			code = handleGetRequestFromClient(exchange);
-		} else {
-			code = 400;
-			responseBody = "Not supported.";
+		try {
+			if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
+				code = handleChatMessageFromClient(exchange);
+			} else if (exchange.getRequestMethod().equalsIgnoreCase("GET")) {
+				code = handleGetRequestFromClient(exchange);
+			} else {
+				code = 400;
+				responseBody = "Not supported.";
+			}
+		} catch (Exception e) {
+			code = 500;
+			responseBody = "Server error: " + e.getMessage();
 		}
 		if (code < 200 || code > 299) {
 			ChatServer.log("*** Error in /chat: " + code + " " + responseBody);
