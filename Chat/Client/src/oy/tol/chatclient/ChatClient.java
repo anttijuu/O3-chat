@@ -1,9 +1,14 @@
 package oy.tol.chatclient;
 
 import java.io.Console;
-import java.io.IOException;
 import java.util.List;
 
+/**
+ * ChatClient is the console based UI for the ChatServer.
+ * It profides the necessary functionality for chatting.
+ * The actual comms with the ChatServer happens in the 
+ * ChatHttpClient class.
+ */
 public class ChatClient implements ChatClientDataProvider {
 
 	// TODO Add "/test" command to send test registrations, chats, get them and also faulty requests.
@@ -17,19 +22,26 @@ public class ChatClient implements ChatClientDataProvider {
 	private static final String CMD_INFO = "/info";
 	private static final String CMD_EXIT = "/exit";
 	
-	private String currentServer = SERVER;
-	private String username = null;
-	private String password = null;
-	private String email = null;
-	private String nick = null;
+	private String currentServer = SERVER; 	// URL of the server without paths.
+	private String username = null;			// Registered & logged user.
+	private String password = null;			// The password in clear text.
+	private String email = null;			// Email address of user, needed for registering.
+	private String nick = null;				// Nickname, user can change the name visible in chats.
 	
-	private ChatHttpClient httpClient = null;
+	private ChatHttpClient httpClient = null;	// Client handling the requests & responses.
 	
 	public static void main(String[] args) {
+		// Run the client.
 		ChatClient client = new ChatClient();
 		client.run();
 	}
 
+	/**
+	 * Runs the show:
+	 * - Creates the http client
+	 * - displays the menu
+	 * - handles commands
+	 */
 	public void run() {
 		httpClient = new ChatHttpClient(this);
 		printCommands();
@@ -77,6 +89,9 @@ public class ChatClient implements ChatClientDataProvider {
 		System.out.println("Bye!");
 	}
 	
+	/**
+	 * Handles the server address change command.
+	 */
 	private void changeServer(Console console) {
 		System.out.print("Enter server address > ");
 		String newServer = console.readLine().trim();
@@ -94,7 +109,9 @@ public class ChatClient implements ChatClientDataProvider {
 	}
 	
 	/**
-	 * Get user credentials from console .
+	 * Get user credentials from console.
+	 * @param console The console for the UI
+	 * @param forRegistering If true, asks all registration data, otherwise just login data.
 	 */
 	private void getUserCredentials(Console console, boolean forRegistering) {
 		System.out.print("Enter username > ");
@@ -119,6 +136,10 @@ public class ChatClient implements ChatClientDataProvider {
 		}
 	}
 	
+	/**
+	 * User wants to change the nick, so ask it.
+	 * @param console
+	 */
 	private void getNick(Console console) {
 		System.out.print("Enter nick > ");
 		String newNick = console.readLine().trim();
@@ -127,7 +148,12 @@ public class ChatClient implements ChatClientDataProvider {
 		}
 	}
 	
-	
+	/**
+	 * Handles the registration of the user with the server.
+	 * All credentials (username, email and password) must be given.
+	 * User is then registered with the server.
+	 * @param console
+	 */
 	private void registerUser(Console console) {
 		System.out.println("Give user credentials for new user for server " + currentServer);
 		getUserCredentials(console, true);
@@ -149,6 +175,11 @@ public class ChatClient implements ChatClientDataProvider {
 		}
 	}
 
+	/**
+	 * Fetches new chat messages from the server.
+	 * User must be logged in. If there are no new messages,
+	 * then nothing happens.
+	 */
 	private void getNewMessages() {
 		try {
 			if (null != username) {
@@ -159,8 +190,6 @@ public class ChatClient implements ChatClientDataProvider {
 						for (ChatMessage message : messages) {
 							System.out.println(message);
 						}
-					} else {
-						System.out.println("No new messages from server.");
 					}
 				} else {
 					System.out.println("Error from server: " + response + " " + httpClient.getServerNotification());
@@ -174,6 +203,9 @@ public class ChatClient implements ChatClientDataProvider {
 		}
 	}
 	
+	/**
+	 * Sends a new chat message to the server.
+	 */
 	private void postMessage(String message) {
 		if (null != username) {
 			try {

@@ -65,8 +65,6 @@ class ChatHttpClient {
 		addr += CHAT;
 		URL url = new URL(addr);
 		
-		
-		// TODO: set timeout to 30 seconds or something to indicate server not responding.
 		HttpsURLConnection connection = createTrustingConnectionDebug(url);
 		
 		connection.setRequestMethod("GET");
@@ -217,7 +215,6 @@ class ChatHttpClient {
 	// For accepting self signed certificates. Not to be used in production software!
 	
 	private HttpsURLConnection createTrustingConnectionDebug(URL url) throws Exception {
-		// TODO fix path away from certificate file name.
 		Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream("./localhost.cer"));
 
 		KeyStore keyStore = KeyStore.getInstance("JKS");
