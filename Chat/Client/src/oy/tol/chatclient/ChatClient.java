@@ -13,7 +13,6 @@ import java.util.TimerTask;
  */
 public class ChatClient implements ChatClientDataProvider {
 
-	// TODO Add "/test" command to send test registrations, chats, get them and also faulty requests.
 	private static final String SERVER = "https://localhost:8001/";
 	private static final String CMD_SERVER	 = "/server";
 	private static final String CMD_REGISTER = "/register";
@@ -23,6 +22,7 @@ public class ChatClient implements ChatClientDataProvider {
 	private static final String CMD_GET = "/get";
 	private static final String CMD_HELP = "/help";
 	private static final String CMD_INFO = "/info";
+	private static final String CMD_TEST = "/test";
 	private static final String CMD_EXIT = "/exit";
 
 	private static final int AUTO_FETCH_INTERVAL = 1000;
@@ -76,7 +76,9 @@ public class ChatClient implements ChatClientDataProvider {
 				getNick(console);
 				break;
 			case CMD_GET:
-				getNewMessages();
+				if (!autoFetch) {
+					getNewMessages();
+				}
 				break;
 			case CMD_AUTO:
 				toggleAutoFetch();
@@ -86,6 +88,9 @@ public class ChatClient implements ChatClientDataProvider {
 				break;
 			case CMD_INFO:
 				printInfo();
+				break;
+			case CMD_TEST:
+				doTests();
 				break;
 			case CMD_EXIT:
 				cancelAutoFetch();
@@ -101,6 +106,10 @@ public class ChatClient implements ChatClientDataProvider {
 		System.out.println("Bye!");
 	}
 	
+	private void doTests() {
+		System.out.println("Not yet implemented! ");
+	}
+
 	private void toggleAutoFetch() {
 		if (null == username) {
 			System.out.println("Login first to fetch messages");
@@ -293,8 +302,9 @@ public class ChatClient implements ChatClientDataProvider {
 		System.out.println("/auto -- Toggles automatic /get in " + AUTO_FETCH_INTERVAL / 1000.0 + " sec intervals");
 		System.out.println("/help -- Prints out this information");
 		System.out.println("/info -- Prints out settings and user information");
+		System.out.println("/test -- Tests the server by automatically using the API");
 		System.out.println("/exit -- Exit the client app");
-		System.out.println("Write a message and press enter to send a message to the chat server");
+		System.out.println(" > To chat, write a message and press enter to send a message.");
 	}
 
 	private void printInfo() {
