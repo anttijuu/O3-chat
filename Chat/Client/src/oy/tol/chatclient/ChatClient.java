@@ -2,6 +2,8 @@ package oy.tol.chatclient;
 
 import java.io.Console;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * ChatClient is the console based UI for the ChatServer.
@@ -17,10 +19,13 @@ public class ChatClient implements ChatClientDataProvider {
 	private static final String CMD_REGISTER = "/register";
 	private static final String CMD_LOGIN = "/login";
 	private static final String CMD_NICK = "/nick";
+	private static final String CMD_AUTO = "/auto";
 	private static final String CMD_GET = "/get";
 	private static final String CMD_HELP = "/help";
 	private static final String CMD_INFO = "/info";
 	private static final String CMD_EXIT = "/exit";
+
+	private static final int AUTO_FETCH_INTERVAL = 1000;
 	
 	private String currentServer = SERVER; 	// URL of the server without paths.
 	private String username = null;			// Registered & logged user.
@@ -29,6 +34,9 @@ public class ChatClient implements ChatClientDataProvider {
 	private String nick = null;				// Nickname, user can change the name visible in chats.
 	
 	private ChatHttpClient httpClient = null;	// Client handling the requests & responses.
+	
+	private boolean autoFetch = false;
+	private Timer autoFetchTimer = null;
 	
 	public static void main(String[] args) {
 		// Run the client.
@@ -70,6 +78,9 @@ public class ChatClient implements ChatClientDataProvider {
 			case CMD_GET:
 				getNewMessages();
 				break;
+			case CMD_AUTO:
+				toggleAutoFetch();
+				break;
 			case CMD_HELP:
 				printCommands();
 				break;
@@ -77,6 +88,7 @@ public class ChatClient implements ChatClientDataProvider {
 				printInfo();
 				break;
 			case CMD_EXIT:
+				cancelAutoFetch();
 				running = false;
 				break;
 			default:
@@ -89,6 +101,50 @@ public class ChatClient implements ChatClientDataProvider {
 		System.out.println("Bye!");
 	}
 	
+	private void toggleAutoFetch() {
+		if (null == username) {
+			System.out.println("Login first to fetch messages");
+			return;
+		}
+		autoFetch = !autoFetch;
+		if (autoFetch) {
+			autoFetch();
+		} else {
+			cancelAutoFetch();
+		}
+	}
+
+	private void cancelAutoFetch() {
+		if (null != autoFetchTimer) {
+			autoFetchTimer.cancel();
+			autoFetchTimer = null;
+		}
+		autoFetch = false;
+	}
+
+	private void autoFetch() {
+		if (autoFetch) {
+			if (null == autoFetchTimer) {
+				autoFetchTimer = new Timer();
+			}
+			try {
+				autoFetchTimer.scheduleAtFixedRate(new TimerTask() {
+					@Override
+					public void run() {
+						if (!autoFetch) {
+							cancel();
+						} else if (getNewMessages() > 0) {
+							System.out.print("O3-chat > ");
+						}
+					}
+				}, AUTO_FETCH_INTERVAL, AUTO_FETCH_INTERVAL);
+			} catch (Exception e) {
+				System.out.println("Cannot autofetch: " + e.getLocalizedMessage());
+				autoFetch = false;
+			}
+		}
+	}
+
 	/**
 	 * Handles the server address change command.
 	 */
@@ -102,6 +158,7 @@ public class ChatClient implements ChatClientDataProvider {
 				currentServer = newServer;
 				username = null;
 				password = null;
+				cancelAutoFetch();
 				System.out.println("Remember to register and/or login to the new server!");
 			}
 		}
@@ -177,16 +234,18 @@ public class ChatClient implements ChatClientDataProvider {
 
 	/**
 	 * Fetches new chat messages from the server.
-	 * User must be logged in. If there are no new messages,
-	 * then nothing happens.
+	 * User must be logged in.
+	 * @return The count of new messages from server.
 	 */
-	private void getNewMessages() {
+	private int getNewMessages() {
+		int count = 0;
 		try {
 			if (null != username) {
 				int response = httpClient.getChatMessages();		
 				if (response >= 200 || response < 300) {
 					List<ChatMessage> messages = httpClient.getNewMessages();
 					if (null != messages) {
+						count = messages.size();
 						for (ChatMessage message : messages) {
 							System.out.println(message);
 						}
@@ -200,7 +259,9 @@ public class ChatClient implements ChatClientDataProvider {
 		} catch (Exception e) {
 			System.out.println("ERROR in getting messages from server " + currentServer);
 			System.out.println(e.getLocalizedMessage());
+			autoFetch = false;
 		}
+		return count;
 	}
 	
 	/**
@@ -229,6 +290,7 @@ public class ChatClient implements ChatClientDataProvider {
 		System.out.println("/login -- Login using already registered credentials");
 		System.out.println("/nick -- Specify a nickname to use in chat server");
 		System.out.println("/get -- Get new messages from server");
+		System.out.println("/auto -- Toggles automatic /get in " + AUTO_FETCH_INTERVAL / 1000.0 + " sec intervals");
 		System.out.println("/help -- Prints out this information");
 		System.out.println("/info -- Prints out settings and user information");
 		System.out.println("/exit -- Exit the client app");
@@ -239,6 +301,7 @@ public class ChatClient implements ChatClientDataProvider {
 		System.out.println("Server: " + currentServer);
 		System.out.println("User: " + username);
 		System.out.println("Nick: " + nick);
+		System.out.println("Autofetch is " + (autoFetch ? "on" : "off"));
 	}
 	
 	@Override

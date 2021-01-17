@@ -42,12 +42,12 @@ public class ChatMessage {
 			str += ANSI_GREEN;
 		}
 		if (diff <= 24) {
-			str += sent.format(DateTimeFormatter.ISO_LOCAL_TIME);
+			str += sent.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
 		} else {
-			str += sent.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+			str += sent.format(DateTimeFormatter.ofPattern("yyyy.MM.dd hh:mm:ss"));
 		}
 		if (useColors) {
-			str += ANSI_RED;
+			str += ANSI_BLUE;
 		}
 		str += " " + nick + ": ";
 		if (useColors) {
