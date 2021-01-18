@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
@@ -40,6 +41,12 @@ public class ChatHandler implements HttpHandler {
 				code = 400;
 				responseBody = "Not supported.";
 			}
+		} catch (JSONException e) {
+			code = 400;
+			responseBody = "Invalid JSON in request";
+		} catch (IOException e) {
+			code = 500;
+			responseBody = "Error in handling the request: " + e.getMessage();
 		} catch (Exception e) {
 			code = 500;
 			responseBody = "Server error: " + e.getMessage();
@@ -54,16 +61,21 @@ public class ChatHandler implements HttpHandler {
 		}
 	}
 	
-	private int handleChatMessageFromClient(HttpExchange exchange) throws IOException {
+	private int handleChatMessageFromClient(HttpExchange exchange) throws Exception {
 		int code = 200;
 		Headers headers = exchange.getRequestHeaders();
 		int contentLength = 0;
 		String contentType = "";
 		if (headers.containsKey("Content-Length")) {
 			contentLength = Integer.parseInt(headers.get("Content-Length").get(0));
+		} else {
+			code = 411;
+			return code;
 		}
 		if (headers.containsKey("Content-Type")) {
 			contentType = headers.get("Content-Type").get(0);
+		} else {
+
 		}
 		String user = exchange.getPrincipal().getUsername();
 
@@ -76,14 +88,9 @@ public class ChatHandler implements HttpHandler {
 			stream.close();
 			if (json.length() > 0) {
 				// TODO process within try catch
-				if (processMessage(user, json)) {
-					exchange.sendResponseHeaders(code, -1);
-					ChatServer.log("New chatmessage saved");
-				} else {
-					code = 400;
-					responseBody = "Corrupted message.";
-					ChatServer.log(responseBody);
-				}
+				exchange.sendResponseHeaders(code, -1);
+				processMessage(user, json);
+				ChatServer.log("New chatmessage saved");
 			} else {
 				code = 400;
 				responseBody = "No content in request";
@@ -97,7 +104,7 @@ public class ChatHandler implements HttpHandler {
 		return code;
 	}
 	
-	private boolean processMessage(String user, String json) {
+	private void processMessage(String user, String json) throws JSONException {
 		JSONObject jsonObject = new JSONObject(json);
 		ChatMessage newMessage = new ChatMessage();
 		newMessage.nick = jsonObject.getString("user");
@@ -105,9 +112,7 @@ public class ChatHandler implements HttpHandler {
 		OffsetDateTime odt = OffsetDateTime.parse(dateStr);
 		newMessage.sent = odt.toLocalDateTime();
 		newMessage.message = jsonObject.getString("message");
-		// messages.put(messageNum++, newMessage);
 		ChatDatabase.getInstance().insertMessage(user, newMessage);
-		return true;
 	}
 	
 	private int handleGetRequestFromClient(HttpExchange exchange) throws IOException {
