@@ -49,11 +49,12 @@ public class ChatClient implements ChatClientDataProvider {
 	 * - Creates the http client
 	 * - displays the menu
 	 * - handles commands
+	 * until user enters command /exit.
 	 */
 	public void run() {
 		httpClient = new ChatHttpClient(this);
 		printCommands();
-		System.out.println("Using server " + currentServer);
+		printInfo();
 		Console console = System.console();
 		if (null == username) {
 			System.out.println("!! Register or login to server first.");
@@ -77,7 +78,9 @@ public class ChatClient implements ChatClientDataProvider {
 				break;
 			case CMD_GET:
 				if (!autoFetch) {
-					getNewMessages();
+					if (getNewMessages() == 0) {
+						System.out.println("No new messages from server.");
+					}
 				}
 				break;
 			case CMD_AUTO:
@@ -106,10 +109,23 @@ public class ChatClient implements ChatClientDataProvider {
 		System.out.println("Bye!");
 	}
 	
+	/**
+	 * Does various tests to the server:
+	 * - registering
+	 * - getting chats (without if-modified-since, with it, logged in and not)
+	 * - posting chats (logged in and not)
+	 * - doing these in various speeds
+	 */
 	private void doTests() {
 		System.out.println("Not yet implemented! ");
 	}
 
+	/**
+	 * Toggles autofetch on and off.
+	 * When autofetch is on, client fetches new chat messages peridically.
+	 * Requires that user has logged in. In case of errors, autofetch
+	 * may be switched off (see calls to cancelAutoFetch).
+	 */
 	private void toggleAutoFetch() {
 		if (null == username) {
 			System.out.println("Login first to fetch messages");
@@ -123,6 +139,9 @@ public class ChatClient implements ChatClientDataProvider {
 		}
 	}
 
+	/**
+	 * Cancels the autofetch.
+	 */
 	private void cancelAutoFetch() {
 		if (null != autoFetchTimer) {
 			autoFetchTimer.cancel();
@@ -131,6 +150,9 @@ public class ChatClient implements ChatClientDataProvider {
 		autoFetch = false;
 	}
 
+	/**
+	 * Creates and launches the autofetch timer task.
+	 */
 	private void autoFetch() {
 		if (autoFetch) {
 			if (null == autoFetchTimer) {
@@ -140,9 +162,11 @@ public class ChatClient implements ChatClientDataProvider {
 				autoFetchTimer.scheduleAtFixedRate(new TimerTask() {
 					@Override
 					public void run() {
+						// Check if autofetch was switched off.
 						if (!autoFetch) {
 							cancel();
 						} else if (getNewMessages() > 0) {
+							// Neet to print the prompt after printing messages.
 							System.out.print("O3-chat > ");
 						}
 					}
@@ -156,6 +180,8 @@ public class ChatClient implements ChatClientDataProvider {
 
 	/**
 	 * Handles the server address change command.
+	 * When server address is changed, username and password
+	 * must be given again (register and/or login).
 	 */
 	private void changeServer(Console console) {
 		System.out.print("Enter server address > ");
@@ -164,10 +190,12 @@ public class ChatClient implements ChatClientDataProvider {
 			System.out.print("Change server from " + currentServer + " to " + newServer + "Y/n? > ");
 			String confirmation = console.readLine().trim();
 			if (confirmation.length() == 0 || confirmation.equalsIgnoreCase("Y")) {
+				// Need to cancel autofetch since must register/login first.
+				cancelAutoFetch();
 				currentServer = newServer;
 				username = null;
+				nick = null;
 				password = null;
-				cancelAutoFetch();
 				System.out.println("Remember to register and/or login to the new server!");
 			}
 		}
@@ -175,7 +203,11 @@ public class ChatClient implements ChatClientDataProvider {
 	}
 	
 	/**
-	 * Get user credentials from console.
+	 * Get user credentials from console (i.e. login or register).
+	 * Registering a new user actually communicates with the server.
+	 * When logging in, user enters the credentials (username & password),
+	 * but no comms with server happens until user actually either retrieves
+	 * new chat messages from the server or posts a new chat message.
 	 * @param console The console for the UI
 	 * @param forRegistering If true, asks all registration data, otherwise just login data.
 	 */
@@ -183,6 +215,9 @@ public class ChatClient implements ChatClientDataProvider {
 		System.out.print("Enter username > ");
 		String newUsername = console.readLine().trim();
 		if (newUsername.length() > 0) {
+			// Need to cancel autofetch since username/pw not usable anymore
+			// until login has been fully done (including password).
+			cancelAutoFetch();
 			username = newUsername;
 			nick = username;
 		}
@@ -228,6 +263,7 @@ public class ChatClient implements ChatClientDataProvider {
 				System.out.println("Must specify all user information for registration!");
 				return;
 			}
+			// Execute the HTTPS request to the server.
 			int response = httpClient.registerUser();
 			if (response >= 200 || response < 300) {
 				System.out.println("Registered successfully, you may start chatting!");
@@ -275,6 +311,8 @@ public class ChatClient implements ChatClientDataProvider {
 	
 	/**
 	 * Sends a new chat message to the server.
+	 * User must be logged in to the server.
+	 * @param message The chat message to send.
 	 */
 	private void postMessage(String message) {
 		if (null != username) {
@@ -292,6 +330,9 @@ public class ChatClient implements ChatClientDataProvider {
 		}
 	}
 	
+	/**
+	 * Print out the available commands.
+	 */
 	private void printCommands() {
 		System.out.println("--- O3 Chat Client Commands ---");
 		System.out.println("/server -- Change the server");
@@ -307,6 +348,9 @@ public class ChatClient implements ChatClientDataProvider {
 		System.out.println(" > To chat, write a message and press enter to send a message.");
 	}
 
+	/**
+	 * Prints out the configuration of the client.
+	 */
 	private void printInfo() {
 		System.out.println("Server: " + currentServer);
 		System.out.println("User: " + username);
@@ -314,6 +358,12 @@ public class ChatClient implements ChatClientDataProvider {
 		System.out.println("Autofetch is " + (autoFetch ? "on" : "off"));
 	}
 	
+	/* 
+	 Implementation of the ChatClientDataProvider interface.
+	 The ChatHttpClient calls these methods to get configuration info
+	 needed in communication with the server.
+	*/
+
 	@Override
 	public String getServer() {
 		return currentServer;
@@ -338,6 +388,5 @@ public class ChatClient implements ChatClientDataProvider {
 	public String getEmail() {
 		return email;
 	}
-	
 	
 }
