@@ -141,13 +141,12 @@ public class ChatHandler implements HttpHandler {
 		long messagesSinceLong = -1;
 		if (null != messagesSince) {
 			messagesSinceLong = messagesSince.toEpochSecond(ZoneOffset.UTC);
+			ChatServer.log("Wants since: " + messagesSince);
 		}
 		List<ChatMessage> messages = ChatDatabase.getInstance().getMessages(messagesSinceLong);
 
 		for (ChatMessage message : messages) {
 			boolean includeThis = false;
-			ChatServer.log("Wants since: " + messagesSince);
-			ChatServer.log("Msg sent: " + message.sent);
 			if (null == messagesSince || (messagesSince != null && messagesSince.isBefore(message.sent))) {
 				includeThis = true;
 			}
