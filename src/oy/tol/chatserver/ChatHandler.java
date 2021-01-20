@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -44,6 +45,9 @@ public class ChatHandler implements HttpHandler {
 		} catch (JSONException e) {
 			code = 400;
 			responseBody = "Invalid JSON in request";
+		} catch (SQLException e ) {
+			code = 400;
+			responseBody = "Database error in saving chat message";
 		} catch (IOException e) {
 			code = 500;
 			responseBody = "Error in handling the request: " + e.getMessage();
@@ -75,7 +79,9 @@ public class ChatHandler implements HttpHandler {
 		if (headers.containsKey("Content-Type")) {
 			contentType = headers.get("Content-Type").get(0);
 		} else {
-
+			code = 400;
+			responseBody = "No content type in request";
+			return code;
 		}
 		String user = exchange.getPrincipal().getUsername();
 
@@ -87,7 +93,6 @@ public class ChatHandler implements HttpHandler {
 			ChatServer.log(json);
 			stream.close();
 			if (json.length() > 0) {
-				// TODO process within try catch
 				exchange.sendResponseHeaders(code, -1);
 				processMessage(user, json);
 				ChatServer.log("New chatmessage saved");
