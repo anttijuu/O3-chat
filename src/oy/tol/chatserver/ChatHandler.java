@@ -20,9 +20,6 @@ import java.util.stream.Collectors;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import jdk.jshell.spi.ExecutionControl.UserException;
-
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -136,7 +133,7 @@ public class ChatHandler implements HttpHandler {
 		}
 	}
 	
-	private int handleGetRequestFromClient(HttpExchange exchange) throws IOException {
+	private int handleGetRequestFromClient(HttpExchange exchange) throws IOException, SQLException {
 		int code = 200;
 		
 		Headers requestHeaders = exchange.getRequestHeaders();

@@ -1,5 +1,7 @@
 package oy.tol.chatserver;
 
+import java.sql.SQLException;
+
 import com.sun.net.httpserver.BasicAuthenticator;
 
 public class ChatAuthenticator extends BasicAuthenticator {
@@ -8,7 +10,7 @@ public class ChatAuthenticator extends BasicAuthenticator {
 		super("chat");
 	}
 	
-	public boolean addUser(String username, String password, String email) {
+	public boolean addUser(String username, String password, String email) throws SQLException {
 		return ChatDatabase.getInstance().addUser(username, password, email);
 	}
 
