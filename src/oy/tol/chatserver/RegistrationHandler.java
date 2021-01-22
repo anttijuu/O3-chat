@@ -40,23 +40,43 @@ public class RegistrationHandler implements HttpHandler {
 				if (headers.containsKey("Content-Type")) {
 					contentType = headers.get("Content-Type").get(0);
 				}
-				if (contentType.equalsIgnoreCase("application/json")) {
+				String expectedContentType = "application/json";
+				if (ChatServer.version < 3) {
+					expectedContentType = "text/plain";
+				}
+				if (contentType.equalsIgnoreCase(expectedContentType)) {
 					InputStream stream = exchange.getRequestBody();
 					String text = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).lines()
 							.collect(Collectors.joining("\n"));
 					stream.close();
 					if (text.length() > 0) {
-						JSONObject registrationMsg = new JSONObject(text);
-						String username = registrationMsg.getString("username");
-						String password = registrationMsg.getString("password");
-						String email = registrationMsg.getString("email");
-						if (!authenticator.addUser(username, password, email)) {
-							code = 403;
-							messageBody = "Registration failed";
+						if (ChatServer.version >= 3) {
+							JSONObject registrationMsg = new JSONObject(text);
+							String username = registrationMsg.getString("username");
+							String password = registrationMsg.getString("password");
+							String email = registrationMsg.getString("email");
+							if (!authenticator.addUser(username, password, email)) {
+								code = 403;
+								messageBody = "Registration failed";
+							} else {
+								// Success
+								exchange.sendResponseHeaders(code, -1);
+								ChatServer.log("User registered successfully: " + username);
+							}
 						} else {
-							// Success
-							exchange.sendResponseHeaders(code, -1);
-							ChatServer.log("User registered successfully: " + username);
+							String [] items = text.split(":");
+							if (items.length == 2) {
+								if (!authenticator.addUser(items[0], items[1], "dummy@email.com")) {
+									code = 403;
+									messageBody = "Registration failed";
+								} else {
+									// Success
+									exchange.sendResponseHeaders(code, -1);
+									ChatServer.log("User registered successfully: " + items[0]);
+								}								
+							} else {
+								code = 400;
+								messageBody = "No valid registration data in request body";												}
 						}
 					} else {
 						code = 400;
@@ -64,7 +84,7 @@ public class RegistrationHandler implements HttpHandler {
 					}
 				} else {
 					code = 411;
-					messageBody = "Content-Type must be text/plain.";
+					messageBody = "Content-Type must be " + expectedContentType;
 				}
 			} else {
 				code = 405;
@@ -72,7 +92,7 @@ public class RegistrationHandler implements HttpHandler {
 			}
 		} catch (JSONException e) {
 			code = 400;
-			messageBody = "No valid registration JSON in request body";
+			messageBody = "No valid registration data in request body";
 		} catch (Exception e) {
 			code = 500;
 			messageBody = "Server internal error";

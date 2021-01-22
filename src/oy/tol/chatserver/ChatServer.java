@@ -18,13 +18,19 @@ import com.sun.net.httpserver.HttpsServer;
 
 public class ChatServer {
 	
+	static int version = 2;
+
 	public static void main(String[] args) throws Exception {
 		try {
 			log("Launching ChatServer...");
 			log("Initializing database...");
-			if (args.length != 1) {
-				log("Usage java -jar jar-file.jar dbname.db");
+			if (args.length != 2) {
+				log("Usage java -jar jar-file.jar dbname.db <version>");
 				return;
+			}
+			int tmpVersion = Integer.parseInt(args[1]);
+			if (tmpVersion >= 2 && tmpVersion < 5) {
+				version = tmpVersion;
 			}
 			ChatDatabase database = ChatDatabase.getInstance();
 			database.open(args[0]);

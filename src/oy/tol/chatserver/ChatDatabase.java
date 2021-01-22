@@ -50,29 +50,24 @@ public class ChatDatabase {
 		}
 	}
 
-	public boolean addUser(String username, String password, String email) {
+	public boolean addUser(String username, String password, String email) throws SQLException {
 		boolean result = false;
 		if (null != connection && !isUserNameRegistered(username)) {
-			try {
-				byte bytes[] = new byte[13];
-				secureRandom.nextBytes(bytes);
-				ChatServer.log("Random bytes: " + bytes);
-				String saltBytes = new String(Base64.getEncoder().encode(bytes));
-				String salt = "$6$" + saltBytes;
-				ChatServer.log("Salt: " + salt);
-				String hashedPassword = Crypt.crypt(password, salt);
-				ChatServer.log("Hashed pw: " + hashedPassword);
-				String insertUserString = "insert into users " +
-						"VALUES('" + username + "','" + hashedPassword + "','" + email +"','" + salt + "')"; 
-				Statement createStatement;
-				createStatement = connection.createStatement();
-				createStatement.executeUpdate(insertUserString);
-				createStatement.close();
-				result = true;
-			} catch (SQLException e) {
-				ChatServer.log("Could not register user in database: " + username);
-				ChatServer.log("Reason: " + e.getErrorCode() + " " + e.getMessage());
-			}
+			byte bytes[] = new byte[13];
+			secureRandom.nextBytes(bytes);
+			ChatServer.log("Random bytes: " + bytes);
+			String saltBytes = new String(Base64.getEncoder().encode(bytes));
+			String salt = "$6$" + saltBytes;
+			ChatServer.log("Salt: " + salt);
+			String hashedPassword = Crypt.crypt(password, salt);
+			ChatServer.log("Hashed pw: " + hashedPassword);
+			String insertUserString = "insert into users " +
+					"VALUES('" + username + "','" + hashedPassword + "','" + email +"','" + salt + "')"; 
+			Statement createStatement;
+			createStatement = connection.createStatement();
+			createStatement.executeUpdate(insertUserString);
+			createStatement.close();
+			result = true;
 		}
 		return result;
 	}
@@ -129,53 +124,40 @@ public class ChatDatabase {
 		return result;
 	}
 
-	public boolean insertMessage(String user, ChatMessage message) {
-		boolean result = false;
-		try {
-			long timeStamp = message.dateAsInt();
-			String insertMsgStatement = "insert into messages " +
-						"VALUES('" + user + "','" + message.nick + "','" + timeStamp +"','" + message.message + "')"; 
-			Statement createStatement;
-			createStatement = connection.createStatement();
-			createStatement.executeUpdate(insertMsgStatement);
-			createStatement.close();
-			result = true;
-		} catch (SQLException e) {
-			ChatServer.log("Could not insert new chat message from: " + user);
-			ChatServer.log("Reason: " + e.getErrorCode() + " " + e.getMessage());
-		}
-		return result;
+	public void insertMessage(String user, ChatMessage message) throws SQLException {
+		long timeStamp = message.dateAsInt();
+		String insertMsgStatement = "insert into messages " +
+					"VALUES('" + user + "','" + message.nick + "','" + timeStamp +"','" + message.message + "')"; 
+		Statement createStatement;
+		createStatement = connection.createStatement();
+		createStatement.executeUpdate(insertMsgStatement);
+		createStatement.close();
 	}
 
-	List<ChatMessage> getMessages(long since) {
+	List<ChatMessage> getMessages(long since) throws SQLException {
 		ArrayList<ChatMessage> messages = null;
 		Statement queryStatement = null;
 
-		try {
-			String queryMessages = "select nick, sent, message from messages ";
-			if (since > 0) {
-				queryMessages += "where sent > " + since + " ";
-			}
-			queryMessages += " order by sent asc limit 100";
-			ChatServer.log(queryMessages);
-			queryStatement = connection.createStatement();
-			ResultSet rs = queryStatement.executeQuery(queryMessages);
-			messages = new ArrayList<ChatMessage>();
-			while (rs.next()) {
-				String user = rs.getString("nick");
-				String message = rs.getString("message");
-				long sent = rs.getLong("sent");
-				ChatMessage msg = new ChatMessage();
-				msg.nick = user;
-				msg.message = message;
-				msg.setSent(sent);
-				messages.add(msg);
-			}
-			queryStatement.close();
-		} catch (SQLException e) {
-			ChatServer.log("Could not get chat message from database");
-			ChatServer.log("Reason: " + e.getErrorCode() + " " + e.getMessage());
+		String queryMessages = "select nick, sent, message from messages ";
+		if (since > 0) {
+			queryMessages += "where sent > " + since + " ";
 		}
+		queryMessages += " order by sent asc limit 100";
+		ChatServer.log(queryMessages);
+		queryStatement = connection.createStatement();
+		ResultSet rs = queryStatement.executeQuery(queryMessages);
+		messages = new ArrayList<ChatMessage>();
+		while (rs.next()) {
+			String user = rs.getString("nick");
+			String message = rs.getString("message");
+			long sent = rs.getLong("sent");
+			ChatMessage msg = new ChatMessage();
+			msg.nick = user;
+			msg.message = message;
+			msg.setSent(sent);
+			messages.add(msg);
+		}
+		queryStatement.close();
 		return messages;
 	}
 

@@ -13,12 +13,16 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import jdk.jshell.spi.ExecutionControl.UserException;
+
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -84,17 +88,20 @@ public class ChatHandler implements HttpHandler {
 			return code;
 		}
 		String user = exchange.getPrincipal().getUsername();
-
-		if (contentType.equalsIgnoreCase("application/json")) {
+		String expectedContentType = "application/json";
+		if (ChatServer.version < 3) {
+			expectedContentType = "text/plain";
+		}
+		if (contentType.equalsIgnoreCase(expectedContentType)) {
 			InputStream stream = exchange.getRequestBody();
-			String json = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))
+			String text = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))
 				        .lines()
 				        .collect(Collectors.joining("\n"));
-			ChatServer.log(json);
+			ChatServer.log(text);
 			stream.close();
-			if (json.length() > 0) {
+			if (text.length() > 0) {
 				exchange.sendResponseHeaders(code, -1);
-				processMessage(user, json);
+				processMessage(user, text);
 				ChatServer.log("New chatmessage saved");
 			} else {
 				code = 400;
@@ -109,15 +116,24 @@ public class ChatHandler implements HttpHandler {
 		return code;
 	}
 	
-	private void processMessage(String user, String json) throws JSONException {
-		JSONObject jsonObject = new JSONObject(json);
-		ChatMessage newMessage = new ChatMessage();
-		newMessage.nick = jsonObject.getString("user");
-		String dateStr = jsonObject.getString("sent");
-		OffsetDateTime odt = OffsetDateTime.parse(dateStr);
-		newMessage.sent = odt.toLocalDateTime();
-		newMessage.message = jsonObject.getString("message");
-		ChatDatabase.getInstance().insertMessage(user, newMessage);
+	private void processMessage(String user, String text) throws JSONException, SQLException {
+		if (ChatServer.version >= 3) {
+			JSONObject jsonObject = new JSONObject(text);
+			ChatMessage newMessage = new ChatMessage();
+			newMessage.nick = jsonObject.getString("user");
+			String dateStr = jsonObject.getString("sent");
+			OffsetDateTime odt = OffsetDateTime.parse(dateStr);
+			newMessage.sent = odt.toLocalDateTime();
+			newMessage.message = jsonObject.getString("message");
+			ChatDatabase.getInstance().insertMessage(user, newMessage);
+		} else {
+			ChatMessage newMessage = new ChatMessage();
+			newMessage.nick = user;
+			newMessage.message = text;
+			LocalDateTime now = LocalDateTime.now();
+			newMessage.sent = now;
+			ChatDatabase.getInstance().insertMessage(user, newMessage);
+		}
 	}
 	
 	private int handleGetRequestFromClient(HttpExchange exchange) throws IOException {
@@ -133,10 +149,6 @@ public class ChatHandler implements HttpHandler {
 		} else {
 			ChatServer.log("No If-Modified-Since header in request");
 		}
-		
-		JSONArray responseMessages = new JSONArray();
-		
-		ZonedDateTime newest = null;
 
 		long messagesSinceLong = -1;
 		if (null != messagesSince) {
@@ -144,37 +156,62 @@ public class ChatHandler implements HttpHandler {
 			ChatServer.log("Wants since: " + messagesSince);
 		}
 		List<ChatMessage> messages = ChatDatabase.getInstance().getMessages(messagesSinceLong);
-
+		if (null == messages) {
+			ChatServer.log("No new messages to deliver to client");
+			code = 204;
+			exchange.sendResponseHeaders(code, -1);			
+			return code;
+		}
+		JSONArray responseMessages = new JSONArray();
+		ZonedDateTime newest = null;
+		// Used if no JSON yet:
+		List<String> plainList = null;
 		for (ChatMessage message : messages) {
 			boolean includeThis = false;
-			if (null == messagesSince || (messagesSince != null && messagesSince.isBefore(message.sent))) {
+			if (null == messagesSince || (messagesSince.isBefore(message.sent))) {
 				includeThis = true;
 			}
 			if (includeThis) {
-				JSONObject jsonMessage = new JSONObject();
-				jsonMessage.put("message", message.message);
-				jsonMessage.put("user", message.nick);
-				LocalDateTime date = message.sent;
-				ZonedDateTime toSend = ZonedDateTime.of(date, ZoneId.of("UTC"));
-				if (null == newest) {
-					newest = toSend;
-				} else {
-					if (toSend.isAfter(newest)) {
+				if (ChatServer.version >= 3) {
+					JSONObject jsonMessage = new JSONObject();
+					jsonMessage.put("message", message.message);
+					jsonMessage.put("user", message.nick);
+					LocalDateTime date = message.sent;
+					ZonedDateTime toSend = ZonedDateTime.of(date, ZoneId.of("UTC"));
+					if (null == newest) {
 						newest = toSend;
+					} else {
+						if (toSend.isAfter(newest)) {
+							newest = toSend;
+						}
 					}
+					String dateText = toSend.format(jsonDateFormatter);
+					jsonMessage.put("sent", dateText);
+					responseMessages.put(jsonMessage);
+				} else {
+					if (null == plainList) {
+						plainList = new ArrayList<String>();
+					}
+					plainList.add(message.message);
 				}
-				String dateText = toSend.format(jsonDateFormatter);
-				jsonMessage.put("sent", dateText);
-				responseMessages.put(jsonMessage);
+
 			}
 		}
-		if (responseMessages.isEmpty()) {
+		boolean isEmpty = false;
+		if (ChatServer.version >= 3) {
+			if (responseMessages.isEmpty()) {
+				isEmpty = true;
+			}
+		} else if (null == plainList) {
+			isEmpty = true;
+		}
+		if (isEmpty) {
 			ChatServer.log("No new messages to deliver to client since last request");
 			code = 204;
 			exchange.sendResponseHeaders(code, -1);
 		} else {
 			ChatServer.log("Delivering " + responseMessages.length() + " messages to client");
-			if (null != newest) {
+			if (null != newest && ChatServer.version >= 5) {
 				newest = newest.plusNanos(1000);
 				Headers headers = exchange.getResponseHeaders();
 				String lastModifiedString = newest.format(httpDateFormatter);
@@ -183,7 +220,16 @@ public class ChatHandler implements HttpHandler {
 			} else {
 				ChatServer.log("Did not put Last-Modified header in response");
 			}
-			byte [] bytes = responseMessages.toString().getBytes("UTF-8");
+			byte [] bytes;
+			if (ChatServer.version >= 3) {
+				bytes = responseMessages.toString().getBytes("UTF-8");
+			} else {
+				String responseBody = "";
+				for (String msg : plainList) {
+					responseBody += msg + "\n";
+				}
+				bytes = responseBody.getBytes("UTF-8");
+			}
 			exchange.sendResponseHeaders(code, bytes.length);
 			OutputStream os = exchange.getResponseBody();
 			os.write(bytes);
