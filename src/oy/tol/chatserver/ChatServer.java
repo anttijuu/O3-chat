@@ -29,12 +29,12 @@ public class ChatServer {
 				return;
 			}
 			int tmpVersion = Integer.parseInt(args[1]);
-			if (tmpVersion >= 2 && tmpVersion < 5) {
+			if (tmpVersion >= 2 && tmpVersion <= 5) {
 				version = tmpVersion;
 			}
 			ChatDatabase database = ChatDatabase.getInstance();
 			database.open(args[0]);
-			log("Initializing HttpServer...");
+			log("Initializing HttpServer with version " + version);
 			HttpsServer server = HttpsServer.create(new InetSocketAddress(8001), 0);
 			log("Initializing SSL Context...");
 			SSLContext sslContext = chatServerSSLContext();
