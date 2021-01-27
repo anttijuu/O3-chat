@@ -149,7 +149,7 @@ public class ChatHandler implements HttpHandler {
 
 		long messagesSinceLong = -1;
 		if (null != messagesSince) {
-			messagesSinceLong = messagesSince.toEpochSecond(ZoneOffset.UTC);
+			messagesSinceLong = messagesSince.toInstant(ZoneOffset.UTC).toEpochMilli();
 			ChatServer.log("Wants since: " + messagesSince);
 		}
 		List<ChatMessage> messages = ChatDatabase.getInstance().getMessages(messagesSinceLong);
