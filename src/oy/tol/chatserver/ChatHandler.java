@@ -12,6 +12,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -175,6 +176,7 @@ public class ChatHandler implements HttpHandler {
 					jsonMessage.put("user", message.nick);
 					LocalDateTime date = message.sent;
 					ZonedDateTime toSend = ZonedDateTime.of(date, ZoneId.of("UTC"));
+					ChatServer.log("newest: " + newest + " toSend: " + toSend);
 					if (null == newest) {
 						newest = toSend;
 					} else {
@@ -209,7 +211,8 @@ public class ChatHandler implements HttpHandler {
 		} else {
 			ChatServer.log("Delivering " + responseMessages.length() + " messages to client");
 			if (null != newest && ChatServer.version >= 5) {
-				newest = newest.plusNanos(1000);
+				newest = newest.plus(1, ChronoUnit.MILLIS);
+				ChatServer.log("Final newest: " + newest);
 				Headers headers = exchange.getResponseHeaders();
 				String lastModifiedString = newest.format(httpDateFormatter);
 				headers.add("Last-Modified", lastModifiedString);
