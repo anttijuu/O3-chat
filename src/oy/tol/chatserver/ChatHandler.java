@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -97,7 +98,7 @@ public class ChatHandler implements HttpHandler {
 				        .collect(Collectors.joining("\n"));
 			ChatServer.log(text);
 			stream.close();
-			if (text.length() > 0) {
+			if (text.trim().length() > 0) {
 				exchange.sendResponseHeaders(code, -1);
 				processMessage(user, text);
 				ChatServer.log("New chatmessage saved");
@@ -128,7 +129,7 @@ public class ChatHandler implements HttpHandler {
 			ChatMessage newMessage = new ChatMessage();
 			newMessage.nick = user;
 			newMessage.message = text;
-			LocalDateTime now = LocalDateTime.now();
+			LocalDateTime now = OffsetDateTime.ofInstant(Instant.now(), ZoneId.of("UTC")).toLocalDateTime();
 			newMessage.sent = now;
 			ChatDatabase.getInstance().insertMessage(user, newMessage);
 		}
@@ -176,7 +177,6 @@ public class ChatHandler implements HttpHandler {
 					jsonMessage.put("user", message.nick);
 					LocalDateTime date = message.sent;
 					ZonedDateTime toSend = ZonedDateTime.of(date, ZoneId.of("UTC"));
-					ChatServer.log("newest: " + newest + " toSend: " + toSend);
 					if (null == newest) {
 						newest = toSend;
 					} else {

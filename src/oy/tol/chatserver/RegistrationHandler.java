@@ -18,7 +18,7 @@ import com.sun.net.httpserver.HttpHandler;
 public class RegistrationHandler implements HttpHandler {
 
 	private ChatAuthenticator authenticator = null;
-	
+
 	RegistrationHandler(ChatAuthenticator authenticator) {
 		this.authenticator = authenticator;
 	}
