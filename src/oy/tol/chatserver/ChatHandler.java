@@ -129,7 +129,7 @@ public class ChatHandler implements HttpHandler {
 			ChatMessage newMessage = new ChatMessage();
 			newMessage.nick = user;
 			newMessage.message = text;
-			LocalDateTime now = OffsetDateTime.ofInstant(Instant.now(), ZoneId.of("UTC")).toLocalDateTime();
+			LocalDateTime now = ZonedDateTime.now(ZoneId.of("UTC")).toLocalDateTime();
 			newMessage.sent = now;
 			ChatDatabase.getInstance().insertMessage(user, newMessage);
 		}
