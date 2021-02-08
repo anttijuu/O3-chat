@@ -142,7 +142,7 @@ public class ChatDatabase {
 		if (since > 0) {
 			queryMessages += "where sent > " + since + " ";
 		}
-		queryMessages += " order by sent asc limit 100";
+		queryMessages += " order by sent asc"; // limit 100";
 		ChatServer.log(queryMessages);
 		queryStatement = connection.createStatement();
 		ResultSet rs = queryStatement.executeQuery(queryMessages);

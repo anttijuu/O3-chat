@@ -56,7 +56,7 @@ public class RegistrationHandler implements HttpHandler {
 							String password = registrationMsg.getString("password");
 							String email = registrationMsg.getString("email");
 							if (!authenticator.addUser(username, password, email)) {
-								code = 403;
+								code = 400;
 								messageBody = "Registration failed";
 							} else {
 								// Success
@@ -67,7 +67,7 @@ public class RegistrationHandler implements HttpHandler {
 							String [] items = text.split(":");
 							if (items.length == 2) {
 								if (!authenticator.addUser(items[0], items[1], "dummy@email.com")) {
-									code = 403;
+									code = 400;
 									messageBody = "Registration failed";
 								} else {
 									// Success
@@ -76,7 +76,8 @@ public class RegistrationHandler implements HttpHandler {
 								}								
 							} else {
 								code = 400;
-								messageBody = "No valid registration data in request body";												}
+								messageBody = "No valid registration data in request body";									
+							}
 						}
 					} else {
 						code = 400;

@@ -47,10 +47,10 @@ public class ChatHandler implements HttpHandler {
 			}
 		} catch (JSONException e) {
 			code = 400;
-			responseBody = "Invalid JSON in request";
+			responseBody = "Invalid JSON in request: " + e.getMessage();
 		} catch (SQLException e ) {
-			code = 400;
-			responseBody = "Database error in saving chat message";
+			code = 500;
+			responseBody = "Database error in saving chat message: " + e.getMessage();
 		} catch (IOException e) {
 			code = 500;
 			responseBody = "Error in handling the request: " + e.getMessage();

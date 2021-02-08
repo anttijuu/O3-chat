@@ -5,6 +5,8 @@ import java.net.InetSocketAddress;
 import java.security.KeyStore;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -57,7 +59,8 @@ public class ChatServer {
 			chatContext.setAuthenticator(authenticator);
 			log("Creating RegistrationHandler...");
 			server.createContext("/registration", new RegistrationHandler(authenticator));
-			server.setExecutor(null);
+			// server.setExecutor(null);
+			server.setExecutor(Executors.newCachedThreadPool());
 			log("Starting ChatServer!");
 			server.start();
 		} catch (SQLException e) {
