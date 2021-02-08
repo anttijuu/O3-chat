@@ -96,7 +96,7 @@ public class ChatHandler implements HttpHandler {
 			String text = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))
 				        .lines()
 				        .collect(Collectors.joining("\n"));
-			ChatServer.log(text);
+			ChatServer.log("Got chat message to ChatHandler thread id " + Thread.currentThread().getId());
 			stream.close();
 			if (text.trim().length() > 0) {
 				exchange.sendResponseHeaders(code, -1);
