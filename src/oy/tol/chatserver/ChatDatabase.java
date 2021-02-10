@@ -68,6 +68,8 @@ public class ChatDatabase {
 			createStatement.executeUpdate(insertUserString);
 			createStatement.close();
 			result = true;
+		} else {
+			ChatServer.log("User already registered: " + user.getName());
 		}
 		return result;
 	}

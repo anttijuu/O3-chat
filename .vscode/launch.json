@@ -6,21 +6,22 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Launch ChatServer",
-            "request": "launch",
-            "mainClass": "oy.tol.chatserver/oy.tol.chatserver.ChatServer",
-            "projectName": "ChatServer"
-        },
-        {
-            "type": "java",
             "name": "Debug ChatServer",
             "request": "launch",
             "mainClass": "oy.tol.chatserver.ChatServer",
             "projectName": "ChatServer",
             "args": [
                 "/Users/anttijuustila/workspace/O3/O3-chat-server/O3-chat.db",
-                "2"
+                "5"
             ]
+        },
+        {
+            "type": "java",
+            "name": "Launch ChatServer",
+            "request": "launch",
+            "mainClass": "oy.tol.chatserver/oy.tol.chatserver.ChatServer",
+            "projectName": "ChatServer"
         }
+        
     ]
 }

@@ -102,7 +102,7 @@ public class RegistrationHandler implements HttpHandler {
 			ChatServer.log("Failed to register the user: " + e.getMessage());
 		}
 		if (code < 200 || code > 299) {
-			ChatServer.log("*** Error in user registration: " + code + " " + messageBody);
+			ChatServer.log("*** Error in user /registration: " + code + " " + messageBody);
 			byte [] bytes = messageBody.getBytes(StandardCharsets.UTF_8);
 			exchange.sendResponseHeaders(code, bytes.length);
 			OutputStream os = exchange.getResponseBody();

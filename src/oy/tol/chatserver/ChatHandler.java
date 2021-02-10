@@ -28,14 +28,13 @@ import com.sun.net.httpserver.HttpHandler;
 
 public class ChatHandler implements HttpHandler {
 	
-	private String responseBody = "";
-	
 	private static final DateTimeFormatter jsonDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
 	private static final DateTimeFormatter httpDateFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss.SSS z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
 	
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
 		int code = 200;
+		String responseBody = "";
 		try {
 			if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
 				code = handleChatMessageFromClient(exchange);
@@ -99,8 +98,8 @@ public class ChatHandler implements HttpHandler {
 			ChatServer.log("Got chat message to ChatHandler thread id " + Thread.currentThread().getId());
 			stream.close();
 			if (text.trim().length() > 0) {
-				exchange.sendResponseHeaders(code, -1);
 				processMessage(user, text);
+				exchange.sendResponseHeaders(code, -1);
 				ChatServer.log("New chatmessage saved");
 			} else {
 				code = 400;

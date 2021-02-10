@@ -6,7 +6,6 @@ import java.security.KeyStore;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
