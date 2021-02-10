@@ -15,12 +15,12 @@ public class ChatAuthenticator extends BasicAuthenticator {
 		super("chat");
 	}
 	
-	public boolean addUser(String username, String password, String email) throws SQLException {
-		if (username.trim().length() >= MIN_USERNAME_LENGTH && 
-			password.trim().length() >= MIN_PASSWORD_LENGTH &&
-			email.trim().length() >= MIN_EMAIL_LENGTH) {
-				if (Charset.forName("US-ASCII").newEncoder().canEncode(username)) {
-					return ChatDatabase.getInstance().addUser(username, password, email);
+	public boolean addUser(User user) throws SQLException {
+		if (user.getName().trim().length() >= MIN_USERNAME_LENGTH && 
+			user.getPassword().trim().length() >= MIN_PASSWORD_LENGTH &&
+			user.getEmail().trim().length() >= MIN_EMAIL_LENGTH) {
+				if (Charset.forName("US-ASCII").newEncoder().canEncode(user.getName())) {
+					return ChatDatabase.getInstance().addUser(user);
 				}	
 		}
 		return false;
@@ -30,6 +30,5 @@ public class ChatAuthenticator extends BasicAuthenticator {
 	public boolean checkCredentials(String username, String password) {
 		return ChatDatabase.getInstance().isRegisteredUser(username, password);
 	}
-
 
 }

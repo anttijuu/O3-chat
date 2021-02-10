@@ -55,7 +55,8 @@ public class RegistrationHandler implements HttpHandler {
 							String username = registrationMsg.getString("username");
 							String password = registrationMsg.getString("password");
 							String email = registrationMsg.getString("email");
-							if (!authenticator.addUser(username, password, email)) {
+							User newUser = new User(username, password, email);
+							if (!authenticator.addUser(newUser)) {
 								code = 400;
 								messageBody = "Registration failed";
 							} else {
@@ -66,7 +67,8 @@ public class RegistrationHandler implements HttpHandler {
 						} else {
 							String [] items = text.split(":");
 							if (items.length == 2) {
-								if (!authenticator.addUser(items[0], items[1], "dummy@email.com")) {
+								User newUser = new User(items[0], items[1], "dummy@email.com");
+								if (!authenticator.addUser(newUser)) {
 									code = 400;
 									messageBody = "Registration failed";
 								} else {

@@ -50,19 +50,19 @@ public class ChatDatabase {
 		}
 	}
 
-	public boolean addUser(String username, String password, String email) throws SQLException {
+	public boolean addUser(User user) throws SQLException {
 		boolean result = false;
-		if (null != connection && !isUserNameRegistered(username)) {
+		if (null != connection && !isUserNameRegistered(user.getName())) {
 			byte bytes[] = new byte[13];
 			secureRandom.nextBytes(bytes);
 			ChatServer.log("Random bytes: " + bytes);
 			String saltBytes = new String(Base64.getEncoder().encode(bytes));
 			String salt = "$6$" + saltBytes;
 			ChatServer.log("Salt: " + salt);
-			String hashedPassword = Crypt.crypt(password, salt);
+			String hashedPassword = Crypt.crypt(user.getPassword(), salt);
 			ChatServer.log("Hashed pw: " + hashedPassword);
 			String insertUserString = "insert into users " +
-					"VALUES('" + username + "','" + hashedPassword + "','" + email +"','" + salt + "')"; 
+					"VALUES('" + user.getName() + "','" + hashedPassword + "','" + user.getEmail() +"','" + salt + "')"; 
 			Statement createStatement;
 			createStatement = connection.createStatement();
 			createStatement.executeUpdate(insertUserString);
