@@ -54,13 +54,15 @@ public class ChatDatabase {
 		boolean result = false;
 		if (null != connection && !isUserNameRegistered(user.getName())) {
 			byte bytes[] = new byte[13];
+			long timestamp = System.currentTimeMillis();
 			secureRandom.nextBytes(bytes);
 			ChatServer.log("Random bytes: " + bytes);
 			String saltBytes = new String(Base64.getEncoder().encode(bytes));
 			String salt = "$6$" + saltBytes;
 			ChatServer.log("Salt: " + salt);
 			String hashedPassword = Crypt.crypt(user.getPassword(), salt);
-			ChatServer.log("Hashed pw: " + hashedPassword);
+			long duration = System.currentTimeMillis() - timestamp;
+			ChatServer.log("Hashing and salting took " + duration + " ms");	
 			String insertUserString = "insert into users " +
 					"VALUES('" + user.getName() + "','" + hashedPassword + "','" + user.getEmail() +"','" + salt + "')"; 
 			Statement createStatement;

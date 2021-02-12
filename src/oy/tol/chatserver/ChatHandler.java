@@ -30,11 +30,11 @@ public class ChatHandler implements HttpHandler {
 	
 	private static final DateTimeFormatter jsonDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
 	private static final DateTimeFormatter httpDateFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss.SSS z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
-	
+	private String responseBody = "";
+
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
 		int code = 200;
-		String responseBody = "";
 		try {
 			if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
 				code = handleChatMessageFromClient(exchange);
@@ -48,8 +48,14 @@ public class ChatHandler implements HttpHandler {
 			code = 400;
 			responseBody = "Invalid JSON in request: " + e.getMessage();
 		} catch (SQLException e ) {
-			code = 500;
-			responseBody = "Database error in saving chat message: " + e.getMessage();
+			String msg = e.getMessage();
+			if (msg.contains("SQLITE_CONSTRAINT_PRIMARYKEY")) {
+				code = 429;
+				responseBody = "Slow down chatting or client requests will be limited or IP banned!";
+			} else {
+				code = 500;
+				responseBody = "Database error in saving chat message: " + e.getMessage();
+			}
 		} catch (IOException e) {
 			code = 500;
 			responseBody = "Error in handling the request: " + e.getMessage();
@@ -57,7 +63,7 @@ public class ChatHandler implements HttpHandler {
 			code = 500;
 			responseBody = "Server error: " + e.getMessage();
 		}
-		if (code < 200 || code > 299) {
+		if (code >= 400) {
 			ChatServer.log("*** Error in /chat: " + code + " " + responseBody);
 			byte [] bytes = responseBody.getBytes("UTF-8");
 			exchange.sendResponseHeaders(code, bytes.length);

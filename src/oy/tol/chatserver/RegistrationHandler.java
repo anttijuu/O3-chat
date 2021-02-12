@@ -18,7 +18,8 @@ import com.sun.net.httpserver.HttpHandler;
 public class RegistrationHandler implements HttpHandler {
 
 	private ChatAuthenticator authenticator = null;
-
+	private String messageBody = "";
+	
 	RegistrationHandler(ChatAuthenticator authenticator) {
 		this.authenticator = authenticator;
 	}
@@ -26,7 +27,6 @@ public class RegistrationHandler implements HttpHandler {
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
 		int code = 200;
-		String messageBody = "";
 		
 		try {
 			if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
@@ -101,7 +101,7 @@ public class RegistrationHandler implements HttpHandler {
 			messageBody = "Server internal error";
 			ChatServer.log("Failed to register the user: " + e.getMessage());
 		}
-		if (code < 200 || code > 299) {
+		if (code >= 400) {
 			ChatServer.log("*** Error in user /registration: " + code + " " + messageBody);
 			byte [] bytes = messageBody.getBytes(StandardCharsets.UTF_8);
 			exchange.sendResponseHeaders(code, bytes.length);
