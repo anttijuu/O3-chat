@@ -1,10 +1,12 @@
 package oy.tol.chatserver;
 
+import java.io.Console;
 import java.io.FileInputStream;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -20,6 +22,7 @@ import com.sun.net.httpserver.HttpsServer;
 public class ChatServer {
 	
 	static int version = 2;
+	private static boolean running = true;
 
 	public static void main(String[] args) throws Exception {
 		try {
@@ -59,14 +62,30 @@ public class ChatServer {
 			log("Creating RegistrationHandler...");
 			server.createContext("/registration", new RegistrationHandler(authenticator));
 			// server.setExecutor(null);
-			server.setExecutor(Executors.newCachedThreadPool());
+			// TODO: ex6 instructions for cached thread pool
+			// TODO: ex6 instructions for shutting down the server gracefully?
+			// TODO: ex6 spotbugs security analysis of the server?
+			// TODO: ex6 javalint analysis of the server
+			ExecutorService executor = Executors.newCachedThreadPool();
+			server.setExecutor(executor);
+			
 			log("Starting ChatServer!");
 			server.start();
+			Console console = System.console();
+			while (running) {
+				String input = console.readLine();
+				if (input.equalsIgnoreCase("/quit")) {
+					running = false;
+					log("Stopping ChatServer in 3 secs...");
+					server.stop(3);
+				}
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		log("Server finished, bye!");
 	}
 
 	private static SSLContext chatServerSSLContext() throws Exception {
