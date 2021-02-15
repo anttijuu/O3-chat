@@ -18,6 +18,7 @@ public class ChatDatabase {
 	private Connection connection = null;
 	private static ChatDatabase singleton = null;
 	private SecureRandom secureRandom = null;
+	private static final int MAX_NUMBER_OF_RECORDS_TO_FETCH = 100;
 
 	public static synchronized ChatDatabase getInstance() {
 		if (null == singleton) {
@@ -43,9 +44,14 @@ public class ChatDatabase {
 		}
 	}
 
-	public void close() throws SQLException {
+	public void close() {
 		if (null != connection) {
-			connection.close();
+			try {
+				connection.close();
+			} catch (SQLException e) {
+				ChatServer.log("*** ERROR in closing the database connection: " + e.getMessage());
+				e.printStackTrace();
+			}
 			connection = null;
 		}
 	}
@@ -151,7 +157,8 @@ public class ChatDatabase {
 		queryStatement = connection.createStatement();
 		ResultSet rs = queryStatement.executeQuery(queryMessages);
 		messages = new ArrayList<ChatMessage>();
-		while (rs.next()) {
+		int recordCount = 0;
+		while (rs.next() && recordCount < MAX_NUMBER_OF_RECORDS_TO_FETCH) {
 			String user = rs.getString("nick");
 			String message = rs.getString("message");
 			long sent = rs.getLong("sent");

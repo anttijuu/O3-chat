@@ -78,6 +78,7 @@ public class ChatServer {
 					running = false;
 					log("Stopping ChatServer in 3 secs...");
 					server.stop(3);
+					database.close();
 				}
 			}
 		} catch (SQLException e) {
