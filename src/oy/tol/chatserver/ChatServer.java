@@ -21,6 +21,8 @@ import com.sun.net.httpserver.HttpsServer;
 
 public class ChatServer {
 	
+	// TODO: read sensitive/contextual conf from config file (JSON/XML)
+	// - db file with path, cert file, cert password, ...
 	static int version = 2;
 	private static boolean running = true;
 

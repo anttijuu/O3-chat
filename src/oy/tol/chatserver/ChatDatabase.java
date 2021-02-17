@@ -15,6 +15,7 @@ import org.apache.commons.codec.digest.Crypt;
 
 public class ChatDatabase {
 
+	// TODO: Change from building queries as strings to prepared statements.
 	private Connection connection = null;
 	private static ChatDatabase singleton = null;
 	private SecureRandom secureRandom = null;
@@ -62,10 +63,8 @@ public class ChatDatabase {
 			byte bytes[] = new byte[13];
 			long timestamp = System.currentTimeMillis();
 			secureRandom.nextBytes(bytes);
-			ChatServer.log("Random bytes: " + bytes);
 			String saltBytes = new String(Base64.getEncoder().encode(bytes));
 			String salt = "$6$" + saltBytes;
-			ChatServer.log("Salt: " + salt);
 			String hashedPassword = Crypt.crypt(user.getPassword(), salt);
 			long duration = System.currentTimeMillis() - timestamp;
 			ChatServer.log("Hashing and salting took " + duration + " ms");	
@@ -152,13 +151,15 @@ public class ChatDatabase {
 		if (since > 0) {
 			queryMessages += "where sent > " + since + " ";
 		}
-		queryMessages += " order by sent asc"; // limit 100";
+		queryMessages += " order by sent desc"; // limit 100";
 		ChatServer.log(queryMessages);
 		queryStatement = connection.createStatement();
 		ResultSet rs = queryStatement.executeQuery(queryMessages);
-		messages = new ArrayList<ChatMessage>();
 		int recordCount = 0;
 		while (rs.next() && recordCount < MAX_NUMBER_OF_RECORDS_TO_FETCH) {
+			if (null == messages) {
+				messages = new ArrayList<ChatMessage>();
+			}
 			String user = rs.getString("nick");
 			String message = rs.getString("message");
 			long sent = rs.getLong("sent");
