@@ -51,7 +51,7 @@ public class ChatHandler implements HttpHandler {
 			String msg = e.getMessage();
 			if (msg.contains("SQLITE_CONSTRAINT_PRIMARYKEY")) {
 				code = 429;
-				responseBody = "Slow down chatting or client requests will be limited or IP banned!";
+				responseBody = "Slow down chatting or your requests will be limited or IP banned!";
 			} else {
 				code = 500;
 				responseBody = "Database error in saving chat message: " + e.getMessage();

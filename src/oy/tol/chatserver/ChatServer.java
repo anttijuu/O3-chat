@@ -63,11 +63,6 @@ public class ChatServer {
 			chatContext.setAuthenticator(authenticator);
 			log("Creating RegistrationHandler...");
 			server.createContext("/registration", new RegistrationHandler(authenticator));
-			// server.setExecutor(null);
-			// TODO: ex6 instructions for cached thread pool
-			// TODO: ex6 instructions for shutting down the server gracefully?
-			// TODO: ex6 spotbugs security analysis of the server?
-			// TODO: ex6 javalint analysis of the server
 			ExecutorService executor = Executors.newCachedThreadPool();
 			server.setExecutor(executor);
 			

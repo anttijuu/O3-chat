@@ -168,6 +168,7 @@ public class ChatDatabase {
 			msg.message = message;
 			msg.setSent(sent);
 			messages.add(msg);
+			recordCount++;
 		}
 		queryStatement.close();
 		return messages;
