@@ -30,66 +30,68 @@ public class ChatHandler implements HttpHandler {
 	
 	private static final DateTimeFormatter jsonDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
 	private static final DateTimeFormatter httpDateFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss.SSS z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
-	private String responseBody = "";
 
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
-		int code = 200;
+		Result result = new Result();
+		result.code = 200;
 		try {
 			if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
-				code = handleChatMessageFromClient(exchange);
+				result = handleChatMessageFromClient(exchange);
 			} else if (exchange.getRequestMethod().equalsIgnoreCase("GET")) {
-				code = handleGetRequestFromClient(exchange);
+				result = handleGetRequestFromClient(exchange);
 			} else {
-				code = 400;
-				responseBody = "Not supported.";
+				result.code = 400;
+				result.response = "Not supported.";
 			}
 		} catch (JSONException e) {
-			code = 400;
-			responseBody = "Invalid JSON in request: " + e.getMessage();
-		} catch (SQLException e ) {
+			result.code = 400;
+			result.response = "Invalid JSON in request: " + e.getMessage();
+		} catch (SQLException e) {
 			String msg = e.getMessage();
 			if (msg.contains("SQLITE_CONSTRAINT_PRIMARYKEY")) {
-				code = 429;
-				responseBody = "Slow down chatting or your requests will be limited or IP banned!";
+				result.code = 429;
+				result.response = "Slow down chatting or your requests will be limited or IP banned!";
 			} else {
-				code = 500;
-				responseBody = "Database error in saving chat message: " + e.getMessage();
+				result.code = 500;
+				result.response = "Database error in saving chat message: " + e.getMessage();
 			}
 		} catch (IOException e) {
-			code = 500;
-			responseBody = "Error in handling the request: " + e.getMessage();
+			result.code = 500;
+			result.response = "Error in handling the request: " + e.getMessage();
 		} catch (Exception e) {
-			code = 500;
-			responseBody = "Server error: " + e.getMessage();
+			result.code = 500;
+			result.response = "Server error: " + e.getMessage();
 		}
-		if (code >= 400) {
-			ChatServer.log("*** Error in /chat: " + code + " " + responseBody);
-			byte [] bytes = responseBody.getBytes("UTF-8");
-			exchange.sendResponseHeaders(code, bytes.length);
+		if (result.code >= 400) {
+			ChatServer.log("*** Error in /chat: " + result.code + " " + result.response);
+			byte [] bytes = result.response.getBytes("UTF-8");
+			exchange.sendResponseHeaders(result.code, bytes.length);
 			OutputStream os = exchange.getResponseBody();
 			os.write(bytes);
 			os.close();
 		}
 	}
 	
-	private int handleChatMessageFromClient(HttpExchange exchange) throws Exception {
-		int code = 200;
+	private Result handleChatMessageFromClient(HttpExchange exchange) throws Exception {
+		Result result = new Result();
+		result.code = 200;
 		Headers headers = exchange.getRequestHeaders();
 		int contentLength = 0;
 		String contentType = "";
 		if (headers.containsKey("Content-Length")) {
 			contentLength = Integer.parseInt(headers.get("Content-Length").get(0));
 		} else {
-			code = 411;
-			return code;
+			result.code = 411;
+			result.response = "No content length in request.";
+			return result;
 		}
 		if (headers.containsKey("Content-Type")) {
 			contentType = headers.get("Content-Type").get(0);
 		} else {
-			code = 400;
-			responseBody = "No content type in request";
-			return code;
+			result.code = 400;
+			result.response = "No content type in request.";
+			return result;
 		}
 		String user = exchange.getPrincipal().getUsername();
 		String expectedContentType = "application/json";
@@ -105,19 +107,20 @@ public class ChatHandler implements HttpHandler {
 			stream.close();
 			if (text.trim().length() > 0) {
 				processMessage(user, text);
-				exchange.sendResponseHeaders(code, -1);
+				exchange.sendResponseHeaders(result.code, -1);
 				ChatServer.log("New chatmessage saved");
 			} else {
-				code = 400;
-				responseBody = "No content in request";
-				ChatServer.log(responseBody);
+				result.code = 400;
+				result.response = "No content in request.";
+	
+				ChatServer.log(result.response);
 			}
 		} else {
-			code = 411;
-			responseBody = "Content-Type must be application/json.";
-			ChatServer.log(responseBody);
+			result.code = 411;
+			result.response = "Content-Type must be application/json.";
+			ChatServer.log(result.response);
 		}
-		return code;
+		return result;
 	}
 	
 	private void processMessage(String user, String text) throws JSONException, SQLException {
@@ -140,8 +143,10 @@ public class ChatHandler implements HttpHandler {
 		}
 	}
 	
-	private int handleGetRequestFromClient(HttpExchange exchange) throws IOException, SQLException {
-		int code = 200;
+	private Result handleGetRequestFromClient(HttpExchange exchange) throws IOException, SQLException {
+		Result result = new Result();
+		result.code = 200;
+		result.response = "";
 		
 		Headers requestHeaders = exchange.getRequestHeaders();
 		LocalDateTime messagesSince = null;
@@ -162,9 +167,9 @@ public class ChatHandler implements HttpHandler {
 		List<ChatMessage> messages = ChatDatabase.getInstance().getMessages(messagesSinceLong);
 		if (null == messages) {
 			ChatServer.log("No new messages to deliver to client");
-			code = 204;
-			exchange.sendResponseHeaders(code, -1);			
-			return code;
+			result.code = 204;
+			exchange.sendResponseHeaders(result.code, -1);			
+			return result;
 		}
 		JSONArray responseMessages = new JSONArray();
 		ZonedDateTime newest = null;
@@ -211,8 +216,8 @@ public class ChatHandler implements HttpHandler {
 		}
 		if (isEmpty) {
 			ChatServer.log("No new messages to deliver to client since last request");
-			code = 204;
-			exchange.sendResponseHeaders(code, -1);
+			result.code = 204;
+			exchange.sendResponseHeaders(result.code, -1);
 		} else {
 			ChatServer.log("Delivering " + responseMessages.length() + " messages to client");
 			if (null != newest && ChatServer.version >= 5) {
@@ -235,12 +240,12 @@ public class ChatHandler implements HttpHandler {
 				}
 				bytes = responseBody.getBytes("UTF-8");
 			}
-			exchange.sendResponseHeaders(code, bytes.length);
+			exchange.sendResponseHeaders(result.code, bytes.length);
 			OutputStream os = exchange.getResponseBody();
 			os.write(bytes);
 			os.close();
 		}
-		return code;
+		return result;
 	}
 	
 }

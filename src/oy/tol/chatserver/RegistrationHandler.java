@@ -18,7 +18,6 @@ import com.sun.net.httpserver.HttpHandler;
 public class RegistrationHandler implements HttpHandler {
 
 	private ChatAuthenticator authenticator = null;
-	private String messageBody = "";
 	
 	RegistrationHandler(ChatAuthenticator authenticator) {
 		this.authenticator = authenticator;
@@ -27,6 +26,7 @@ public class RegistrationHandler implements HttpHandler {
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
 		int code = 200;
+		String responseBody = "";
 		
 		try {
 			if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
@@ -58,7 +58,7 @@ public class RegistrationHandler implements HttpHandler {
 							User newUser = new User(username, password, email);
 							if (!authenticator.addUser(newUser)) {
 								code = 400;
-								messageBody = "Registration failed";
+								responseBody = "Registration failed";
 							} else {
 								// Success
 								exchange.sendResponseHeaders(code, -1);
@@ -70,7 +70,7 @@ public class RegistrationHandler implements HttpHandler {
 								User newUser = new User(items[0], items[1], "dummy@email.com");
 								if (!authenticator.addUser(newUser)) {
 									code = 400;
-									messageBody = "Registration failed";
+									responseBody = "Registration failed";
 								} else {
 									// Success
 									exchange.sendResponseHeaders(code, -1);
@@ -78,32 +78,32 @@ public class RegistrationHandler implements HttpHandler {
 								}								
 							} else {
 								code = 400;
-								messageBody = "No valid registration data in request body";									
+								responseBody = "No valid registration data in request body";									
 							}
 						}
 					} else {
 						code = 400;
-						messageBody = "No content in request";
+						responseBody = "No content in request";
 					}
 				} else {
 					code = 411;
-					messageBody = "Content-Type must be " + expectedContentType;
+					responseBody = "Content-Type must be " + expectedContentType;
 				}
 			} else {
 				code = 405;
-				messageBody = "Method not supported.";
+				responseBody = "Method not supported.";
 			}
 		} catch (JSONException e) {
 			code = 400;
-			messageBody = "No valid registration data in request body";
+			responseBody = "No valid registration data in request body";
 		} catch (Exception e) {
 			code = 500;
-			messageBody = "Server internal error";
+			responseBody = "Server internal error";
 			ChatServer.log("Failed to register the user: " + e.getMessage());
 		}
 		if (code >= 400) {
-			ChatServer.log("*** Error in user /registration: " + code + " " + messageBody);
-			byte [] bytes = messageBody.getBytes(StandardCharsets.UTF_8);
+			ChatServer.log("*** Error in user /registration: " + code + " " + responseBody);
+			byte [] bytes = responseBody.getBytes(StandardCharsets.UTF_8);
 			exchange.sendResponseHeaders(code, bytes.length);
 			OutputStream os = exchange.getResponseBody();
 			os.write(bytes);

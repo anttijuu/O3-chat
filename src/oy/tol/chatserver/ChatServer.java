@@ -23,6 +23,8 @@ public class ChatServer {
 	
 	// TODO: read sensitive/contextual conf from config file (JSON/XML)
 	// - db file with path, cert file, cert password, ...
+	// TODO: use the same color output lib than in Client. ERRORS in red.
+	// TODO: Next time, give the skeleton project to students to avoid hassle with tools.
 	static int version = 2;
 	private static boolean running = true;
 

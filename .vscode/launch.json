@@ -10,18 +10,13 @@
             "request": "launch",
             "mainClass": "oy.tol.chatserver.ChatServer",
             "projectName": "ChatServer",
+            "cwd": "${workspaceFolder}",
             "args": [
                 "/Users/anttijuustila/workspace/O3/O3-chat-server/O3-chat.db",
-                "5"
+                "5",
+                ">",
+                "vslog.txt"
             ]
-        },
-        {
-            "type": "java",
-            "name": "Launch ChatServer",
-            "request": "launch",
-            "mainClass": "oy.tol.chatserver/oy.tol.chatserver.ChatServer",
-            "projectName": "ChatServer"
         }
-        
     ]
 }
