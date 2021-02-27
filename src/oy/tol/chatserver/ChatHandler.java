@@ -94,10 +94,7 @@ public class ChatHandler implements HttpHandler {
 			return result;
 		}
 		String user = exchange.getPrincipal().getUsername();
-		String expectedContentType = "application/json";
-		if (ChatServer.version < 3) {
-			expectedContentType = "text/plain";
-		}
+		String expectedContentType = ChatServer.contentFormat;
 		if (contentType.equalsIgnoreCase(expectedContentType)) {
 			InputStream stream = exchange.getRequestBody();
 			String text = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))
@@ -124,7 +121,7 @@ public class ChatHandler implements HttpHandler {
 	}
 	
 	private void processMessage(String user, String text) throws JSONException, SQLException {
-		if (ChatServer.version >= 3) {
+		if (ChatServer.contentFormat.equals("application/json")) {
 			JSONObject jsonObject = new JSONObject(text);
 			ChatMessage newMessage = new ChatMessage();
 			newMessage.nick = jsonObject.getString("user");
@@ -181,7 +178,7 @@ public class ChatHandler implements HttpHandler {
 				includeThis = true;
 			}
 			if (includeThis) {
-				if (ChatServer.version >= 3) {
+				if (ChatServer.contentFormat.equals("application/json")) {
 					JSONObject jsonMessage = new JSONObject();
 					jsonMessage.put("message", message.message);
 					jsonMessage.put("user", message.nick);
@@ -207,7 +204,7 @@ public class ChatHandler implements HttpHandler {
 			}
 		}
 		boolean isEmpty = false;
-		if (ChatServer.version >= 3) {
+		if (ChatServer.contentFormat.equals("application/json")) {
 			if (responseMessages.isEmpty()) {
 				isEmpty = true;
 			}
@@ -220,10 +217,11 @@ public class ChatHandler implements HttpHandler {
 			exchange.sendResponseHeaders(result.code, -1);
 		} else {
 			ChatServer.log("Delivering " + responseMessages.length() + " messages to client");
-			if (null != newest && ChatServer.version >= 5) {
+			Headers headers = exchange.getResponseHeaders();
+			headers.add("Content-Type", ChatServer.contentFormat);
+			if (null != newest && ChatServer.useModifiedHeaders) {
 				newest = newest.plus(1, ChronoUnit.MILLIS);
 				ChatServer.log("Final newest: " + newest);
-				Headers headers = exchange.getResponseHeaders();
 				String lastModifiedString = newest.format(httpDateFormatter);
 				headers.add("Last-Modified", lastModifiedString);
 				ChatServer.log("Added Last-Modified header to response");
@@ -231,7 +229,7 @@ public class ChatHandler implements HttpHandler {
 				ChatServer.log("Did not put Last-Modified header in response");
 			}
 			byte [] bytes;
-			if (ChatServer.version >= 3) {
+			if (ChatServer.contentFormat.equals("application/json")) {
 				bytes = responseMessages.toString().getBytes("UTF-8");
 			} else {
 				String responseBody = "";

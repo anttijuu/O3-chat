@@ -40,17 +40,14 @@ public class RegistrationHandler implements HttpHandler {
 				if (headers.containsKey("Content-Type")) {
 					contentType = headers.get("Content-Type").get(0);
 				}
-				String expectedContentType = "application/json";
-				if (ChatServer.version < 3) {
-					expectedContentType = "text/plain";
-				}
+				String expectedContentType = ChatServer.contentFormat;
 				if (contentType.equalsIgnoreCase(expectedContentType)) {
 					InputStream stream = exchange.getRequestBody();
 					String text = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).lines()
 							.collect(Collectors.joining("\n"));
 					stream.close();
 					if (text.length() > 0) {
-						if (ChatServer.version >= 3) {
+						if (ChatServer.contentFormat.equals("application/json")) {
 							JSONObject registrationMsg = new JSONObject(text);
 							String username = registrationMsg.getString("username");
 							String password = registrationMsg.getString("password");

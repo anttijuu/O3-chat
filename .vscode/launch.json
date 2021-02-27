@@ -12,10 +12,7 @@
             "projectName": "ChatServer",
             "cwd": "${workspaceFolder}",
             "args": [
-                "/Users/anttijuustila/workspace/O3/O3-chat-server/O3-chat.db",
-                "5",
-                ">",
-                "vslog.txt"
+                "/Users/juustila/workspace/O3/O3-chat-server/chatserver.properties"
             ]
         }
     ]

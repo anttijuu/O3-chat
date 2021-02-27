@@ -128,7 +128,9 @@ public class ChatDatabase {
 				ChatServer.log("Could not check isRegisteredUser: " + username);
 				ChatServer.log("Reason: " + e.getErrorCode() + " " + e.getMessage());
 			}
-
+			if (!result) {
+				ChatServer.log("Not a registered user!");
+			}
 		}
 		return result;
 	}

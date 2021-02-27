@@ -1,11 +1,15 @@
 package oy.tol.chatserver;
 
 import java.io.Console;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -18,46 +22,48 @@ import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;
 import com.sun.net.httpserver.HttpsServer;
+import com.sun.net.httpserver.HttpServer;
 
 public class ChatServer {
 	
-	// TODO: read sensitive/contextual conf from config file (JSON/XML)
-	// - db file with path, cert file, cert password, ...
 	// TODO: use the same color output lib than in Client. ERRORS in red.
 	// TODO: Next time, give the skeleton project to students to avoid hassle with tools.
-	static int version = 2;
+
 	private static boolean running = true;
 
 	public static void main(String[] args) throws Exception {
 		try {
 			log("Launching ChatServer...");
 			log("Initializing database...");
-			if (args.length != 2) {
-				log("Usage java -jar jar-file.jar dbname.db <version>");
+			if (args.length != 1) {
+				log("Usage java -jar jar-file.jar config.properties");
 				return;
 			}
-			int tmpVersion = Integer.parseInt(args[1]);
-			if (tmpVersion >= 2 && tmpVersion <= 5) {
-				version = tmpVersion;
-			}
+			readConfiguration(args[0]);
 			ChatDatabase database = ChatDatabase.getInstance();
-			database.open(args[0]);
-			log("Initializing HttpServer with version " + version);
-			HttpsServer server = HttpsServer.create(new InetSocketAddress(8001), 0);
-			log("Initializing SSL Context...");
-			SSLContext sslContext = chatServerSSLContext();
-			server.setHttpsConfigurator (new HttpsConfigurator(sslContext) {
-		        public void configure (HttpsParameters params) {
-		        // get the remote address if needed
-		        InetSocketAddress remote = params.getClientAddress();
-		        SSLContext c = getSSLContext();
-		        // get the default parameters
-		        SSLParameters sslparams = c.getDefaultSSLParameters();
-		        params.setSSLParameters(sslparams);
-		        // statement above could throw IAE if any params invalid.
-		        // eg. if app has a UI and parameters supplied by a user.
-		        }
-		    });
+			database.open(dbFile);
+			log("Initializing HttpServer...");
+			HttpServer server = null;
+			if (useHttps) {
+				HttpsServer tmpServer = HttpsServer.create(new InetSocketAddress(8001), 0);
+				log("Initializing SSL Context...");
+				SSLContext sslContext = chatServerSSLContext();
+				tmpServer.setHttpsConfigurator (new HttpsConfigurator(sslContext) {
+					public void configure (HttpsParameters params) {
+					// get the remote address if needed
+					InetSocketAddress remote = params.getClientAddress();
+					SSLContext c = getSSLContext();
+					// get the default parameters
+					SSLParameters sslparams = c.getDefaultSSLParameters();
+					params.setSSLParameters(sslparams);
+					// statement above could throw IAE if any params invalid.
+					// eg. if app has a UI and parameters supplied by a user.
+					}
+				});
+				server = tmpServer;
+			} else {
+				server = HttpServer.create(new InetSocketAddress(8001), 0);
+			}
 			log("Initializing authenticator...");
 			ChatAuthenticator authenticator = new ChatAuthenticator();
 			log("Creating ChatHandler...");
@@ -65,9 +71,11 @@ public class ChatServer {
 			chatContext.setAuthenticator(authenticator);
 			log("Creating RegistrationHandler...");
 			server.createContext("/registration", new RegistrationHandler(authenticator));
-			ExecutorService executor = Executors.newCachedThreadPool();
+			ExecutorService executor = null;
+			if (useHttpThreadPool) {
+				executor = Executors.newCachedThreadPool();
+			}
 			server.setExecutor(executor);
-			
 			log("Starting ChatServer!");
 			server.start();
 			Console console = System.console();
@@ -82,6 +90,8 @@ public class ChatServer {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -89,9 +99,9 @@ public class ChatServer {
 	}
 
 	private static SSLContext chatServerSSLContext() throws Exception {
-		char[] passphrase = "s3rver-secr3t-d0no7-xp0s3".toCharArray();
+		char[] passphrase = certificatePassword.toCharArray();
 		KeyStore ks = KeyStore.getInstance("JKS");
-		ks.load(new FileInputStream("keystore.jks"), passphrase);
+		ks.load(new FileInputStream(certificateFile), passphrase);
 
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 		kmf.init(ks, passphrase);
@@ -117,4 +127,54 @@ public class ChatServer {
 	public static void log(String message) {
 		System.out.println(ANSI_GREEN + LocalDateTime.now() + ANSI_RESET + " " + message);
 	}
+
+	public static String dbFile = "O3-chat.db";
+	public static boolean useHttps = true;
+	public static String contentFormat = "application/json";
+	public static boolean useModifiedHeaders = true;
+	public static boolean useHttpThreadPool = true;
+	public static String certificateFile = "keystore.jks";
+	public static String certificatePassword = "";
+
+	private static void readConfiguration(String configFileName) throws FileNotFoundException, IOException {
+		System.out.println("Using configuration: " + configFileName);
+		File configFile = new File(configFileName);
+		Properties config = new Properties();
+		FileInputStream istream;
+		istream = new FileInputStream(configFile);
+		config.load(istream);
+		dbFile = config.getProperty("database");
+		if (config.getProperty("https", "true").equalsIgnoreCase("true")) {
+			useHttps = true;
+		} else {
+			useHttps = false;
+		}
+		contentFormat = config.getProperty("format");
+		if (config.getProperty("modified-headers", "true").equalsIgnoreCase("true")) {
+			useModifiedHeaders = true;
+		} else {
+			useModifiedHeaders = false;
+		}
+		if (config.getProperty("http-threads", "true").equalsIgnoreCase("true")) {
+			useHttpThreadPool = true;
+		} else {
+			useHttpThreadPool = false;
+		}
+		certificateFile = config.getProperty("certfile");
+		certificatePassword = config.getProperty("certpass");
+		istream.close();
+		if (dbFile == null || 
+			contentFormat == null || 
+			certificateFile == null || 
+			certificatePassword == null) {
+		   throw new RuntimeException("ChatServer Properties file does not have properties set.");
+		} else {
+		   System.out.println("Database file: " + dbFile);
+		   System.out.println("Use https: " + useHttps);
+		   System.out.println("Certificate file: " + certificateFile);
+		   System.out.println("Content format: " + contentFormat);
+		   System.out.println("Use Modified-Since: " + useModifiedHeaders);
+		   System.out.println("Use HTTP thread pool: " + useHttpThreadPool);
+		}
+	 }
 }
