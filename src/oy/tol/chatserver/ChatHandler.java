@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -15,6 +14,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -46,12 +46,12 @@ public class ChatHandler implements HttpHandler {
 			}
 		} catch (JSONException e) {
 			result.code = 400;
-			result.response = "Invalid JSON in request: " + e.getMessage();
+			result.response = "🤬 Invalid JSON in request: " + e.getMessage();
 		} catch (SQLException e) {
 			String msg = e.getMessage();
 			if (msg.contains("SQLITE_CONSTRAINT_PRIMARYKEY")) {
 				result.code = 429;
-				result.response = "Slow down chatting or your requests will be limited or IP banned!";
+				result.response = "🤬 Slow down chatting or your requests will be limited or IP banned!";
 			} else {
 				result.code = 500;
 				result.response = "Database error in saving chat message: " + e.getMessage();
@@ -59,6 +59,9 @@ public class ChatHandler implements HttpHandler {
 		} catch (IOException e) {
 			result.code = 500;
 			result.response = "Error in handling the request: " + e.getMessage();
+		} catch (DateTimeParseException e) {
+			result.code = 400;
+			result.response = "Error in parsing dates in the request: " + e.getMessage();
 		} catch (Exception e) {
 			result.code = 500;
 			result.response = "Server error: " + e.getMessage();
