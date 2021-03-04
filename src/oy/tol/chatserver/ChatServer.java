@@ -28,6 +28,8 @@ public class ChatServer {
 	
 	// TODO: use the same color output lib than in Client. ERRORS in red.
 	// TODO: Next time, give the skeleton project to students to avoid hassle with tools.
+	// TODO: Check if this influences on cert usage:
+	// https://stackoverflow.com/questions/26792813/why-do-i-get-no-name-matching-found-certificateexception
 
 	private static boolean running = true;
 
