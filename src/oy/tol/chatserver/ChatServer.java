@@ -28,6 +28,11 @@ public class ChatServer {
 	
 	// TODO: use the same color output lib than in Client. ERRORS in red.
 	// TODO: Next time, give the skeleton project to students to avoid hassle with tools.
+	// TODO: Skeleton includes reading the properties
+	// TODO: Change POSTs to return 204 since no data is returned
+	// TODO: Should chat get return 304 Not Modified when If-Modified-Since returns nothing?
+	// TODO: Client should use "Accept: application/json" header in GET /chat
+	// TODO: Implement 418 I'm a teapot (RFC 2324, RFC 7168)
 	// TODO: Check if this influences on cert usage:
 	// https://stackoverflow.com/questions/26792813/why-do-i-get-no-name-matching-found-certificateexception
 
