@@ -51,6 +51,7 @@ public class ChatServer {
 				log("Initializing SSL Context...");
 				SSLContext sslContext = chatServerSSLContext();
 				tmpServer.setHttpsConfigurator (new HttpsConfigurator(sslContext) {
+					@Override
 					public void configure (HttpsParameters params) {
 					// get the remote address if needed
 					InetSocketAddress remote = params.getClientAddress();
