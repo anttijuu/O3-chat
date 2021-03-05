@@ -1,6 +1,8 @@
 package oy.tol.chatserver;
 
 import java.io.File;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.digest.Crypt;
 
 public class ChatDatabase {
@@ -62,14 +65,11 @@ public class ChatDatabase {
 		if (null != connection && !isUserNameRegistered(user.getName())) {
 			byte bytes[] = new byte[13];
 			long timestamp = System.currentTimeMillis();
-			secureRandom.nextBytes(bytes);
-			String saltBytes = new String(Base64.getEncoder().encode(bytes));
-			String salt = "$6$" + saltBytes;
-			String hashedPassword = Crypt.crypt(user.getPassword(), salt);
+			String hashedPassword = Crypt.crypt(user.getPassword());
 			long duration = System.currentTimeMillis() - timestamp;
 			ChatServer.log("Hashing and salting took " + duration + " ms");	
 			String insertUserString = "insert into users " +
-					"VALUES('" + user.getName() + "','" + hashedPassword + "','" + user.getEmail() +"','" + salt + "')"; 
+					"VALUES('" + user.getName() + "','" + hashedPassword + "','" + user.getEmail() +"')"; 
 			Statement createStatement;
 			createStatement = connection.createStatement();
 			createStatement.executeUpdate(insertUserString);
@@ -110,7 +110,7 @@ public class ChatDatabase {
 		Statement queryStatement = null;
 		if (null != connection) {
 			try {
-				String queryUser = "select name, passwd, salt from users where name='" + username + "'";
+				String queryUser = "select name, passwd from users where name='" + username + "'";
 				queryStatement = connection.createStatement();
 				ResultSet rs = queryStatement.executeQuery(queryUser);
 				while (rs.next()) {
@@ -182,7 +182,6 @@ public class ChatDatabase {
 					"(name varchar(32) NOT NULL, " +
 					"passwd varchar(32) NOT NULL, " +
 					"email varchar(32) NOT NULL, " +
-					"salt varchar(32) NOT NULL, " +
 					"PRIMARY KEY (name))";
 			Statement createStatement = connection.createStatement();
 			createStatement.executeUpdate(createUsersString);
