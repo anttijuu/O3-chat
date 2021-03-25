@@ -46,12 +46,13 @@ public class ChatServer {
 	public static void main(String[] args) throws Exception {
 		try {
 			log("Launching ChatServer...");
-			log("Initializing database...");
 			if (args.length != 1) {
 				log("Usage java -jar jar-file.jar config.properties");
 				return;
 			}
+			log("Reading configuration...");
 			readConfiguration(args[0]);
+			log("Initializing database...");
 			ChatDatabase database = ChatDatabase.getInstance();
 			database.open(dbFile);
 			log("Initializing HttpServer...");
