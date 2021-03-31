@@ -144,7 +144,7 @@ public class ChatDatabase {
 		createStatement = connection.prepareStatement(insertMsgStatement);
 		createStatement.setString(1, user);
 		createStatement.setString(2, message.nick);
-		createStatement.setLong(3, message.dateAsInt());
+		createStatement.setLong(3, message.dateAsLong());
 		createStatement.setString(4, message.message);
 		createStatement.executeUpdate();
 		createStatement.close();
