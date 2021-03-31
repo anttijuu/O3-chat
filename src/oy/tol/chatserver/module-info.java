@@ -1,7 +1,4 @@
 /**
- * 
- */
-/**
  * @author Antti Juustila
  *
  */

@@ -33,6 +33,7 @@ public class ChatServer {
 	// TODO: Should chat get return 304 Not Modified when If-Modified-Since returns nothing?
 	// TODO: Client should use "Accept: application/json" header in GET /chat
 	// TODO: Implement 418 I'm a teapot (RFC 2324, RFC 7168)
+	// TODO: Check & apply: https://anantjain60.medium.com/secure-coding-techniques-in-java-9b81901beea8
 	// TODO: Check if this influences on cert usage:
 	// https://stackoverflow.com/questions/26792813/why-do-i-get-no-name-matching-found-certificateexception
 
