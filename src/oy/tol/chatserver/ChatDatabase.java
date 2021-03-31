@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -63,17 +64,17 @@ public class ChatDatabase {
 	public boolean addUser(User user) throws SQLException {
 		boolean result = false;
 		if (null != connection && !isUserNameRegistered(user.getName())) {
-			byte bytes[] = new byte[13];
 			long timestamp = System.currentTimeMillis();
 			String hashedPassword = Crypt.crypt(user.getPassword());
 			long duration = System.currentTimeMillis() - timestamp;
 			ChatServer.log("Hashing and salting took " + duration + " ms");	
-			String insertUserString = "insert into users " +
-					"VALUES('" + user.getName() + "','" + hashedPassword + "','" + user.getEmail() +"')"; 
-			Statement createStatement;
-			createStatement = connection.createStatement();
-			createStatement.executeUpdate(insertUserString);
-			createStatement.close();
+			String insertUser = "insert into users values (?, ?, ?)";
+			PreparedStatement statement = connection.prepareStatement(insertUser);
+			statement.setString(1, user.getName());
+			statement.setString(2, hashedPassword);
+			statement.setString(3, user.getEmail());
+			statement.executeUpdate();
+			statement.close();
 			result = true;
 		} else {
 			ChatServer.log("User already registered: " + user.getName());
@@ -85,9 +86,10 @@ public class ChatDatabase {
 		boolean result = false;
 		if (null != connection) {
 			try {
-				String queryUser = "select name from users where name='" + username + "'";
-				Statement queryStatement = connection.createStatement();
-				ResultSet rs = queryStatement.executeQuery(queryUser);
+				String queryUser = "select name from users where name = ?";
+				PreparedStatement queryStatement = connection.prepareStatement(queryUser);
+				queryStatement.setString(1, username);
+				ResultSet rs = queryStatement.executeQuery();
 				while (rs.next()) {
 					String user = rs.getString("name");
 					if (user.equals(username)) {
@@ -107,12 +109,13 @@ public class ChatDatabase {
 
 	public boolean isRegisteredUser(String username, String password) {
 		boolean result = false;
-		Statement queryStatement = null;
+		PreparedStatement queryStatement = null;
 		if (null != connection) {
 			try {
-				String queryUser = "select name, passwd from users where name='" + username + "'";
-				queryStatement = connection.createStatement();
-				ResultSet rs = queryStatement.executeQuery(queryUser);
+				String queryUser = "select name, passwd from users where name = ?";
+				queryStatement = connection.prepareStatement(queryUser);
+				queryStatement.setString(1, username);
+				ResultSet rs = queryStatement.executeQuery();
 				while (rs.next()) {
 					String user = rs.getString("name");
 					String hashedPassword = rs.getString("passwd");
@@ -136,12 +139,14 @@ public class ChatDatabase {
 	}
 
 	public void insertMessage(String user, ChatMessage message) throws SQLException {
-		long timeStamp = message.dateAsInt();
-		String insertMsgStatement = "insert into messages " +
-					"VALUES('" + user + "','" + message.nick + "','" + timeStamp +"','" + message.message + "')"; 
-		Statement createStatement;
-		createStatement = connection.createStatement();
-		createStatement.executeUpdate(insertMsgStatement);
+		String insertMsgStatement = "insert into messages values(?, ?, ?, ?)";
+		PreparedStatement createStatement;
+		createStatement = connection.prepareStatement(insertMsgStatement);
+		createStatement.setString(1, user);
+		createStatement.setString(2, message.nick);
+		createStatement.setLong(3, message.dateAsInt());
+		createStatement.setString(4, message.message);
+		createStatement.executeUpdate();
 		createStatement.close();
 	}
 

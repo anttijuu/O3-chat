@@ -27,13 +27,18 @@ import com.sun.net.httpserver.HttpServer;
 public class ChatServer {
 	
 	// TODO: use the same color output lib than in Client. ERRORS in red.
+	// TODO: Remember to change exercise material to reflect what is changed.
 	// TODO: Next time, give the skeleton project to students to avoid hassle with tools.
-	// TODO: Skeleton includes reading the properties
+	// TODO: Skeleton includes reading the properties file.
 	// TODO: Change POSTs to return 204 since no data is returned
+	// TODO: Change ChatMessage.dateAsInt to dateAsLong, int is confusing.
 	// TODO: Should chat get return 304 Not Modified when If-Modified-Since returns nothing?
 	// TODO: Client should use "Accept: application/json" header in GET /chat
-	// TODO: Implement 418 I'm a teapot (RFC 2324, RFC 7168)
 	// TODO: Check & apply: https://anantjain60.medium.com/secure-coding-techniques-in-java-9b81901beea8
+	// TODO: All possible SQL queries should be prepared queries.
+	// TODO: Include SQL query parameter sanitation: https://www.baeldung.com/sql-injection
+	//       https://owasp.org/www-community/attacks/SQL_Injection
+	// TODO: Implement 418 I'm a teapot (RFC 2324, RFC 7168) ;)
 	// TODO: Check if this influences on cert usage:
 	// https://stackoverflow.com/questions/26792813/why-do-i-get-no-name-matching-found-certificateexception
 
@@ -42,12 +47,13 @@ public class ChatServer {
 	public static void main(String[] args) throws Exception {
 		try {
 			log("Launching ChatServer...");
-			log("Initializing database...");
 			if (args.length != 1) {
 				log("Usage java -jar jar-file.jar config.properties");
 				return;
 			}
+			log("Reading configuration...");
 			readConfiguration(args[0]);
+			log("Initializing database...");
 			ChatDatabase database = ChatDatabase.getInstance();
 			database.open(dbFile);
 			log("Initializing HttpServer...");

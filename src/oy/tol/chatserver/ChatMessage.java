@@ -9,7 +9,7 @@ public class ChatMessage {
     public String nick;
     public String message;
 
-    long dateAsInt() {
+    long dateAsLong() {
         return sent.toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 
