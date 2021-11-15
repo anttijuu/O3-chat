@@ -144,6 +144,7 @@ public class ChatServer {
 	}
 
 	public static String dbFile = "O3-chat.db";
+	public static int serverPort = 10000;
 	public static boolean useHttps = true;
 	public static String contentFormat = "application/json";
 	public static boolean useModifiedHeaders = true;
@@ -158,6 +159,7 @@ public class ChatServer {
 		FileInputStream istream;
 		istream = new FileInputStream(configFile);
 		config.load(istream);
+		serverPort = Integer.valueOf(config.getProperty("port", "10000"));
 		dbFile = config.getProperty("database");
 		if (config.getProperty("https", "true").equalsIgnoreCase("true")) {
 			useHttps = true;
@@ -184,6 +186,7 @@ public class ChatServer {
 			certificatePassword == null) {
 		   throw new RuntimeException("ChatServer Properties file does not have properties set.");
 		} else {
+			System.out.println("Server port: " + serverPort);
 		   System.out.println("Database file: " + dbFile);
 		   System.out.println("Use https: " + useHttps);
 		   System.out.println("Certificate file: " + certificateFile);

@@ -6,9 +6,23 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Launch with Arguments Prompt",
+            "request": "launch",
+            "mainClass": "",
+            "args": "${command:SpecifyProgramArgs}"
+        },
+        {
+            "type": "java",
+            "name": "Launch ChatServer",
+            "request": "launch",
+            "mainClass": "oy.tol.chatserver/oy.tol.chatserver.ChatServer",
+            "projectName": "ChatServer"
+        },
+        {
+            "type": "java",
             "name": "Debug ChatServer",
             "request": "launch",
-            "mainClass": "oy.tol.chatserver.ChatServer",
+            "mainClass": "oy.tol.chatserver/oy.tol.chatserver.ChatServer",
             "projectName": "ChatServer",
             "cwd": "${workspaceFolder}",
             "args": [

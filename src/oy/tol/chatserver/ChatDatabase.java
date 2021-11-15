@@ -1,8 +1,6 @@
 package oy.tol.chatserver;
 
 import java.io.File;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -14,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.digest.Crypt;
 
 public class ChatDatabase {
@@ -65,7 +62,10 @@ public class ChatDatabase {
 		boolean result = false;
 		if (null != connection && !isUserNameRegistered(user.getName())) {
 			long timestamp = System.currentTimeMillis();
-			String hashedPassword = Crypt.crypt(user.getPassword());
+			byte[] bytes = new byte[16];
+			secureRandom.nextBytes(bytes);
+			String salt = "$6$" + Base64.getEncoder().encodeToString(bytes);
+			String hashedPassword = Crypt.crypt(user.getPassword(), salt);
 			long duration = System.currentTimeMillis() - timestamp;
 			ChatServer.log("Hashing and salting took " + duration + " ms");	
 			String insertUser = "insert into users values (?, ?, ?)";
@@ -158,7 +158,7 @@ public class ChatDatabase {
 		if (since > 0) {
 			queryMessages += "where sent > " + since + " ";
 		}
-		queryMessages += " order by sent desc"; // limit 100";
+		queryMessages += " order by sent desc limit 100"; // limit 100";
 		ChatServer.log(queryMessages);
 		queryStatement = connection.createStatement();
 		ResultSet rs = queryStatement.executeQuery(queryMessages);
