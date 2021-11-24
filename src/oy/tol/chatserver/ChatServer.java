@@ -59,25 +59,30 @@ public class ChatServer {
 			log("Initializing HttpServer...");
 			HttpServer server = null;
 			if (useHttps) {
-				HttpsServer tmpServer = HttpsServer.create(new InetSocketAddress(8001), 0);
+				HttpsServer tmpServer = HttpsServer.create(new InetSocketAddress(serverPort), 0);
 				log("Initializing SSL Context...");
 				SSLContext sslContext = chatServerSSLContext();
 				tmpServer.setHttpsConfigurator (new HttpsConfigurator(sslContext) {
 					@Override
 					public void configure (HttpsParameters params) {
-					// get the remote address if needed
-					InetSocketAddress remote = params.getClientAddress();
-					SSLContext c = getSSLContext();
-					// get the default parameters
-					SSLParameters sslparams = c.getDefaultSSLParameters();
-					params.setSSLParameters(sslparams);
-					// statement above could throw IAE if any params invalid.
-					// eg. if app has a UI and parameters supplied by a user.
+						try {
+							// get the remote address if needed
+							InetSocketAddress remote = params.getClientAddress();
+							SSLContext c = getSSLContext();
+							// get the default parameters
+							SSLParameters sslparams = c.getDefaultSSLParameters();
+							params.setSSLParameters(sslparams);
+							// statement above could throw IAE if any params invalid.
+							// eg. if app has a UI and parameters supplied by a user.
+						} catch (Exception e) {
+							System.out.println("Exception in HttpsConfigurator.configure: " + e.getMessage());
+						}
 					}
 				});
 				server = tmpServer;
 			} else {
-				server = HttpServer.create(new InetSocketAddress(8001), 0);
+				log("Using http, not https");
+				server = HttpServer.create(new InetSocketAddress(serverPort), 0);
 			}
 			log("Initializing authenticator...");
 			ChatAuthenticator authenticator = new ChatAuthenticator();
