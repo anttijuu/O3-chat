@@ -148,6 +148,10 @@ public class ChatServer {
 		System.out.println(ANSI_GREEN + LocalDateTime.now() + ANSI_RESET + " " + message);
 	}
 
+	public static void log(String message, String color) {
+		System.out.println(color + LocalDateTime.now() + ANSI_RESET + " " + message);
+	}
+
 	public static String dbFile = "O3-chat.db";
 	public static int serverPort = 10000;
 	public static boolean useHttps = true;
@@ -158,7 +162,7 @@ public class ChatServer {
 	public static String certificatePassword = "";
 
 	private static void readConfiguration(String configFileName) throws FileNotFoundException, IOException {
-		System.out.println("Using configuration: " + configFileName);
+		log("Using configuration: " + configFileName, ANSI_YELLOW);
 		File configFile = new File(configFileName);
 		Properties config = new Properties();
 		FileInputStream istream;
@@ -191,13 +195,13 @@ public class ChatServer {
 			certificatePassword == null) {
 		   throw new RuntimeException("ChatServer Properties file does not have properties set.");
 		} else {
-			System.out.println("Server port: " + serverPort);
-		   System.out.println("Database file: " + dbFile);
-		   System.out.println("Use https: " + useHttps);
-		   System.out.println("Certificate file: " + certificateFile);
-		   System.out.println("Content format: " + contentFormat);
-		   System.out.println("Use Modified-Since: " + useModifiedHeaders);
-		   System.out.println("Use HTTP thread pool: " + useHttpThreadPool);
+			log("Server port: " + serverPort, ANSI_YELLOW);
+		   log("Database file: " + dbFile, ANSI_YELLOW);
+		   log("Use https: " + useHttps, ANSI_YELLOW);
+		   log("Certificate file: " + certificateFile, ANSI_YELLOW);
+		   log("Content format: " + contentFormat, ANSI_YELLOW);
+		   log("Use Modified-Since: " + useModifiedHeaders, ANSI_YELLOW);
+		   log("Use HTTP thread pool: " + useHttpThreadPool, ANSI_YELLOW);
 		}
 	 }
 }
