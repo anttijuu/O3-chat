@@ -1,6 +1,6 @@
 package oy.tol.chatserver;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
 import com.sun.net.httpserver.BasicAuthenticator;
@@ -19,7 +19,7 @@ public class ChatAuthenticator extends BasicAuthenticator {
 		if (user.getName().trim().length() >= MIN_USERNAME_LENGTH && 
 			user.getPassword().trim().length() >= MIN_PASSWORD_LENGTH &&
 			user.getEmail().trim().length() >= MIN_EMAIL_LENGTH) {
-				if (Charset.forName("US-ASCII").newEncoder().canEncode(user.getName())) {
+				if (StandardCharsets.US_ASCII.newEncoder().canEncode(user.getName())) {
 					return ChatDatabase.getInstance().addUser(user);
 				}	
 		}

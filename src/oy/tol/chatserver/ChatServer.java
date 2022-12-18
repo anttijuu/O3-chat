@@ -41,6 +41,8 @@ public class ChatServer {
 	// TODO: Implement 418 I'm a teapot (RFC 2324, RFC 7168) ;)
 	// TODO: Check if this influences on cert usage:
 	// https://stackoverflow.com/questions/26792813/why-do-i-get-no-name-matching-found-certificateexception
+	// TODO: give cert password in server startup parameters, instead of in the properties file.
+	// TODO: get real certificate instead of using self-signed one.
 
 	private static boolean running = true;
 

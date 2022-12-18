@@ -165,7 +165,7 @@ public class ChatDatabase {
 		int recordCount = 0;
 		while (rs.next() && recordCount < MAX_NUMBER_OF_RECORDS_TO_FETCH) {
 			if (null == messages) {
-				messages = new ArrayList<ChatMessage>();
+				messages = new ArrayList<>();
 			}
 			String user = rs.getString("nick");
 			String message = rs.getString("message");
