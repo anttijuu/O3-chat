@@ -30,6 +30,8 @@ public class ChatHandler implements HttpHandler {
 	
 	private static final DateTimeFormatter jsonDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
 	private static final DateTimeFormatter httpDateFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss.SSS z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
+	// TODO: Think what would be a suitable max msg len. Also put this into settings file.
+	private static final int MAX_CHAT_JSON_MESSAGE_LENGTH = 8192;
 
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
@@ -84,6 +86,11 @@ public class ChatHandler implements HttpHandler {
 		String contentType = "";
 		if (headers.containsKey("Content-Length")) {
 			contentLength = Integer.parseInt(headers.get("Content-Length").get(0));
+			if (contentLength > MAX_CHAT_JSON_MESSAGE_LENGTH) {
+				result.code = 413;
+				result.response = "Content too large";
+				return result;
+			}
 		} else {
 			result.code = 411;
 			result.response = "No content length in request.";
@@ -203,7 +210,6 @@ public class ChatHandler implements HttpHandler {
 					}
 					plainList.add(message.message);
 				}
-
 			}
 		}
 		boolean isEmpty = false;

@@ -40,18 +40,18 @@ public class RegistrationHandler implements HttpHandler {
 				if (headers.containsKey("Content-Type")) {
 					contentType = headers.get("Content-Type").get(0);
 				}
-				String expectedContentType = ChatServer.contentFormat;
-				if (contentType.equalsIgnoreCase(expectedContentType)) {
-					InputStream stream = exchange.getRequestBody();
-					String text = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).lines()
-							.collect(Collectors.joining("\n"));
-					stream.close();
-					if (text.length() > 0) {
+				if (contentLength > 0) {
+					String expectedContentType = ChatServer.contentFormat;
+					if (contentType.equalsIgnoreCase(expectedContentType)) {
+						InputStream stream = exchange.getRequestBody();
+						String text = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).lines()
+								.collect(Collectors.joining("\n"));
+						stream.close();
 						if (ChatServer.contentFormat.equals("application/json")) {
 							JSONObject registrationMsg = new JSONObject(text);
-							String username = registrationMsg.getString("username");
-							String password = registrationMsg.getString("password");
-							String email = registrationMsg.getString("email");
+							String username = registrationMsg.getString("username").trim();
+							String password = registrationMsg.getString("password").trim();
+							String email = registrationMsg.getString("email").trim();
 							User newUser = new User(username, password, email);
 							if (!authenticator.addUser(newUser)) {
 								code = 400;
@@ -79,12 +79,12 @@ public class RegistrationHandler implements HttpHandler {
 							}
 						}
 					} else {
-						code = 400;
-						responseBody = "No content in request";
+						code = 411;
+						responseBody = "Content-Type must be " + expectedContentType;
 					}
 				} else {
 					code = 411;
-					responseBody = "Content-Type must be " + expectedContentType;
+					responseBody = "No content length in request.";
 				}
 			} else {
 				code = 405;

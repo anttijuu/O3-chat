@@ -6,7 +6,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.security.KeyManagementException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Properties;
@@ -27,21 +32,15 @@ import com.sun.net.httpserver.HttpServer;
 public class ChatServer {
 	
 	// TODO: use the same color output lib than in Client. ERRORS in red.
-	// TODO: Remember to change exercise material to reflect what is changed.
-	// TODO: Next time, give the skeleton project to students to avoid hassle with tools.
-	// TODO: Skeleton includes reading the properties file.
 	// TODO: Change POSTs to return 204 since no data is returned
-	// TODO: Change ChatMessage.dateAsInt to dateAsLong, int is confusing.
 	// TODO: Should chat get return 304 Not Modified when If-Modified-Since returns nothing?
 	// TODO: Client should use "Accept: application/json" header in GET /chat
 	// TODO: Check & apply: https://anantjain60.medium.com/secure-coding-techniques-in-java-9b81901beea8
-	// TODO: All possible SQL queries should be prepared queries.
 	// TODO: Include SQL query parameter sanitation: https://www.baeldung.com/sql-injection
 	//       https://owasp.org/www-community/attacks/SQL_Injection
 	// TODO: Implement 418 I'm a teapot (RFC 2324, RFC 7168) ;)
 	// TODO: Check if this influences on cert usage:
 	// https://stackoverflow.com/questions/26792813/why-do-i-get-no-name-matching-found-certificateexception
-	// TODO: give cert password in server startup parameters, instead of in the properties file.
 	// TODO: get real certificate instead of using self-signed one.
 
 	private static boolean running = true;
@@ -49,10 +48,11 @@ public class ChatServer {
 	public static void main(String[] args) throws Exception {
 		try {
 			log("Launching ChatServer...");
-			if (args.length != 1) {
-				log("Usage java -jar jar-file.jar config.properties");
+			if (args.length != 2) {
+				log("Usage java -jar jar-file.jar config.properties certpassword");
 				return;
 			}
+			certificatePassword = args[1];
 			log("Reading configuration...");
 			readConfiguration(args[0]);
 			log("Initializing database...");
@@ -112,15 +112,14 @@ public class ChatServer {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
+		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException | UnrecoverableKeyException | KeyManagementException e) {
+			log("Something wrong with the certificate!", ANSI_RED);
 			e.printStackTrace();
 		}
 		log("Server finished, bye!");
 	}
 
-	private static SSLContext chatServerSSLContext() throws Exception {
+	private static SSLContext chatServerSSLContext() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, UnrecoverableKeyException, KeyManagementException {
 		char[] passphrase = certificatePassword.toCharArray();
 		KeyStore ks = KeyStore.getInstance("JKS");
 		ks.load(new FileInputStream(certificateFile), passphrase);
@@ -154,14 +153,14 @@ public class ChatServer {
 		System.out.println(color + LocalDateTime.now() + ANSI_RESET + " " + message);
 	}
 
-	public static String dbFile = "O3-chat.db";
-	public static int serverPort = 10000;
-	public static boolean useHttps = true;
-	public static String contentFormat = "application/json";
-	public static boolean useModifiedHeaders = true;
-	public static boolean useHttpThreadPool = true;
-	public static String certificateFile = "keystore.jks";
-	public static String certificatePassword = "";
+	static String dbFile = "O3-chat.db";
+	static int serverPort = 10000;
+	static boolean useHttps = true;
+	static String contentFormat = "application/json";
+	static boolean useModifiedHeaders = true;
+	static boolean useHttpThreadPool = true;
+	static String certificateFile = "keystore.jks";
+	static String certificatePassword = "";
 
 	private static void readConfiguration(String configFileName) throws FileNotFoundException, IOException {
 		log("Using configuration: " + configFileName, ANSI_YELLOW);
@@ -189,12 +188,10 @@ public class ChatServer {
 			useHttpThreadPool = false;
 		}
 		certificateFile = config.getProperty("certfile");
-		certificatePassword = config.getProperty("certpass");
 		istream.close();
 		if (dbFile == null || 
 			contentFormat == null || 
-			certificateFile == null || 
-			certificatePassword == null) {
+			certificateFile == null) {
 		   throw new RuntimeException("ChatServer Properties file does not have properties set.");
 		} else {
 			log("Server port: " + serverPort, ANSI_YELLOW);
