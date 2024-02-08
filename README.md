@@ -2,13 +2,16 @@
 
 A Java chat server implemented for Programming 3 course. The course teachers server side programming.
 
+This server is implemented as a skeleton sample solution to aid teachers in supporting students. So not a real server intended for real use.
+
 Implementation is configurable due to the stepwise advancement of the course. This is why code has lots of places where e.g. checking is done if content is either text only or `application/json`.
 
 First, students implement a simple server with HTTP, without encryption and text only content. Then gradually HTTPS is added, along with JSON payload, database for storing the chat messages, etc.
 
 For this, the `chatserver.properties` contains settings one can use to switch these features on or off.
 
-The server uses a self signed certificate. If using a real one, 
+The server uses a self signed certificate. See instructions on how to do that in client instructions.
+
 
 ## Building
 
